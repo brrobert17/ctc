@@ -1,0 +1,10 @@
+{
+  "users": [
+    {
+      "id": "ee2318aa-893b-4b8b-a11b-cd684b02b0a5",
+      "username": "testuser",
+      "password": "$2a$10$l27CcvLp7XNxDN19xHRtR.34PM.59uZ2bTvITMhpFyIS/WLX0iRX6",
+      "createdAt": "2025-11-18T15:36:03.585Z"
+    }
+  ]
+}
