@@ -1,0 +1,24 @@
+
+{
+  "year": 2022,
+  "mileage": 27649.0,
+  "mpg_avg": 19.0,
+  "engine_size_l": 3.5,
+  "hp": 156.0,
+  "car_age": 1,
+  "manufacturer": "ford",
+  "model": "expedition xlt",
+  "transmission": "automatic",
+  "drivetrain": "FWD",
+  "fuel_type": "gas",
+  "exterior_color": "premium",
+  "accidents_or_damage": 0.0,
+  "one_owner": 1.0,
+  "personal_use_only": 0.0,
+  "model_variant": "other",
+  "model_engine": "expedition xlt_3.5",
+  "model_drivetrain": "expedition xlt_4wd",
+  "model_full": "expedition xlt_3.5_4wd",
+
+"price": 59194.0 
+}

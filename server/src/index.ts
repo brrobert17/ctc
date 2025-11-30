@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import authRouter from './routers/auth.router';
 import testRouter from './routers/test.router';
+import mlRouter from './routers/ml.router';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/test', testRouter);
+app.use('/api/ml', mlRouter);
 
 // Health check
 app.get('/health', (req: Request, res: Response): void => {
