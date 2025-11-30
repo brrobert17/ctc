@@ -3,6 +3,7 @@ import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import BrowsePage from './pages/BrowsePage'
 import CarDetailPage from './pages/CarDetailPage'
+import EstimationPage from './pages/EstimationPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 
@@ -24,6 +25,12 @@ const browseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/browse',
   component: BrowsePage,
+})
+
+const estimationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/estimate',
+  component: EstimationPage,
 })
 
 const carDetailRoute = createRoute({
@@ -48,6 +55,7 @@ const signupRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   browseRoute,
+  estimationRoute,
   carDetailRoute,
   loginRoute,
   signupRoute,

@@ -28,6 +28,17 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-4">
+          <Link 
+            to="/estimate"
+            className="hidden md:flex items-center gap-2 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            Get Estimation
+          </Link>
+
           <button 
             className="hidden md:flex items-center gap-2 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors"
             onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-chat'))}
