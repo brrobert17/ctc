@@ -531,3 +531,288 @@ export const chat = async (
     throw new Error(`Failed to get response from LLM: ${error.message}`);
   }
 };
+
+/**
+ * Streaming chat with async generator for Server-Sent Events
+ * Yields chunks in real-time as they arrive from Ollama
+ */
+export async function* chatStream(
+  userMessage: string,
+  conversationHistory: Array<{ role: string; content: string }> = []
+): AsyncGenerator<any, void, unknown> {
+  try {
+    console.log('[LLM STREAM] chatStream called', {
+      userMessage,
+      historyLength: conversationHistory.length,
+    });
+
+    // Yield immediate thinking indicator
+    yield {
+      type: 'thinking',
+      message: 'Thinking...',
+    };
+
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...conversationHistory,
+      { role: 'user', content: userMessage },
+    ];
+
+    console.log('[LLM STREAM] starting Ollama stream...');
+
+    // Stream the initial response from Ollama
+    const stream = await ollama.chat({
+      model: 'gpt-oss',
+      messages: messages,
+      tools: tools,
+      stream: true,
+      options: {
+        num_predict: 2048,
+        num_ctx: 8192,
+        temperature: 0.7,
+        top_k: 40,
+        top_p: 0.9,
+        repeat_penalty: 1.1,
+      }
+    });
+
+    let fullResponse = '';
+    let toolCalls: any[] = [];
+    let hasYieldedContent = false;
+    
+    // Process the stream
+    for await (const chunk of stream) {
+      console.log('[LLM STREAM] chunk received', {
+        hasToolCalls: !!chunk.message?.tool_calls,
+        hasContent: !!chunk.message?.content,
+        contentLength: chunk.message?.content?.length || 0,
+      });
+
+      // Check if this chunk contains tool calls
+      if (chunk.message?.tool_calls && chunk.message.tool_calls.length > 0) {
+        // Store tool calls but don't stop processing
+        if (toolCalls.length === 0) {
+          toolCalls = chunk.message.tool_calls;
+          console.log('[LLM STREAM] tool calls detected', toolCalls.length, toolCalls);
+          
+          // Notify client that tools are being called
+          for (const toolCall of toolCalls) {
+            const fn: any = toolCall.function || {};
+            const toolName = fn.name || 'unknown';
+            
+            let statusMessage = 'Using tool...';
+            if (toolName === 'search_car_database') {
+              statusMessage = 'Searching local database...';
+            } else if (toolName === 'web_search') {
+              statusMessage = 'Searching the web...';
+            } else if (toolName === 'get_market_stats') {
+              statusMessage = 'Getting market statistics...';
+            }
+            
+            yield {
+              type: 'tool_call',
+              tool: toolName,
+              message: statusMessage,
+              parameters: fn.arguments,
+            };
+          }
+        }
+      }
+
+      // Regular content chunk - yield even if we have tool calls
+      if (chunk.message?.content) {
+        const content = chunk.message.content;
+        fullResponse += content;
+        hasYieldedContent = true;
+        
+        console.log('[LLM STREAM] yielding content chunk', content.length, 'chars');
+        yield {
+          type: 'content',
+          content: content,
+        };
+      }
+    }
+
+    console.log('[LLM STREAM] initial stream complete', {
+      fullResponseLength: fullResponse.length,
+      toolCallsCount: toolCalls.length,
+      hasYieldedContent,
+    });
+
+    // If tools were called, execute them and get final response
+    if (toolCalls.length > 0) {
+      console.log('[LLM STREAM] executing', toolCalls.length, 'tools...');
+      
+      const toolMessages: any[] = [];
+      
+      for (const call of toolCalls) {
+        const fn: any = call.function || {};
+        const name: string = fn.name || 'unknown_tool';
+        const callId: string = call.id || 'unknown_id';
+        let args: any = fn.arguments ?? {};
+
+        if (typeof args === 'string') {
+          try {
+            args = JSON.parse(args);
+          } catch {
+            // keep as string
+          }
+        }
+
+        // Notify client which tool is executing
+        let executingMessage = `Executing ${name}...`;
+        if (name === 'search_car_database') {
+          executingMessage = 'Searching database...';
+        } else if (name === 'web_search') {
+          executingMessage = 'Searching the web...';
+        } else if (name === 'get_market_stats') {
+          executingMessage = 'Calculating statistics...';
+        }
+        
+        yield {
+          type: 'tool_executing',
+          tool: name,
+          message: executingMessage,
+          parameters: args,
+        };
+
+        console.log('[LLM STREAM] executing tool:', name, JSON.stringify(args).slice(0, 100));
+        const toolResult = await executeTool({ name, parameters: args });
+        console.log('[LLM STREAM] tool result length:', toolResult.length);
+        console.log('[LLM STREAM] tool result preview:', toolResult.slice(0, 200));
+        
+        // Notify client of tool result
+        yield {
+          type: 'tool_result',
+          tool: name,
+          message: 'Processing results...',
+          result: toolResult.slice(0, 200) + (toolResult.length > 200 ? '...' : ''),
+        };
+
+        // Ollama expects 'tool' role with call metadata
+        toolMessages.push({
+          role: 'tool',
+          content: toolResult,
+          name: name,
+          tool_call_id: callId,
+        });
+      }
+
+      // Get final response after tool execution
+      const messagesWithTools: any[] = [
+        ...messages,
+        { role: 'assistant', content: '', tool_calls: toolCalls },
+        ...toolMessages,
+      ];
+
+      console.log('[LLM STREAM] messages for final response:', JSON.stringify(messagesWithTools, null, 2).slice(0, 500));
+
+      yield {
+        type: 'generating',
+        message: 'Analyzing results and generating response...',
+      };
+
+      console.log('[LLM STREAM] getting final response after tools...');
+      const finalStream = await ollama.chat({
+        model: 'gpt-oss',
+        messages: messagesWithTools,
+        stream: true,
+        // Don't send tools again in final response
+        options: {
+          num_predict: 2048,
+          num_ctx: 8192,
+          temperature: 0.7,
+          top_k: 40,
+          top_p: 0.9,
+          repeat_penalty: 1.1,
+        }
+      });
+
+      let finalResponseReceived = false;
+      for await (const chunk of finalStream) {
+        console.log('[LLM STREAM] final stream chunk:', JSON.stringify(chunk).slice(0, 200));
+        if (chunk.message?.content) {
+          const content = chunk.message.content;
+          fullResponse += content;
+          hasYieldedContent = true;
+          finalResponseReceived = true;
+          
+          console.log('[LLM STREAM] final content chunk', content.length, 'chars');
+          yield {
+            type: 'content',
+            content: content,
+          };
+        }
+      }
+      
+      // If tools were executed but model didn't generate a response, create a summary
+      if (!finalResponseReceived && toolMessages.length > 0) {
+        console.warn('[LLM STREAM] Model did not respond after tool execution. Providing formatted tool results.');
+        
+        // Try to parse and format the tool results nicely
+        let formattedResults = '';
+        for (const toolMsg of toolMessages) {
+          const toolName = toolMsg.name || 'unknown';
+          const content = toolMsg.content;
+          
+          try {
+            // Try to parse as JSON for structured data
+            const parsed = JSON.parse(content);
+            
+            if (toolName === 'search_car_database' && Array.isArray(parsed)) {
+              if (parsed.length === 0) {
+                formattedResults += 'No vehicles found matching your criteria.\n\n';
+              } else {
+                formattedResults += `Found ${parsed.length} vehicle(s):\n\n`;
+                parsed.forEach((car: any, idx: number) => {
+                  formattedResults += `**${idx + 1}. ${car.year} ${car.manufacturer} ${car.model}**\n`;
+                  formattedResults += `- Price: $${car.price?.toLocaleString() || 'N/A'}\n`;
+                  if (car.mileage) formattedResults += `- Mileage: ${car.mileage.toLocaleString()} km\n`;
+                  if (car.condition) formattedResults += `- Condition: ${car.condition}\n`;
+                  if (car.location) formattedResults += `- Location: ${car.location}\n`;
+                  formattedResults += '\n';
+                });
+              }
+            } else if (typeof parsed === 'object') {
+              formattedResults += `**${toolName} results:**\n\n`;
+              formattedResults += JSON.stringify(parsed, null, 2) + '\n\n';
+            } else {
+              formattedResults += content + '\n\n';
+            }
+          } catch {
+            // Not JSON, use as-is
+            formattedResults += content + '\n\n';
+          }
+        }
+        
+        hasYieldedContent = true;
+        
+        yield {
+          type: 'content',
+          content: formattedResults || 'Tool executed but no results were returned.',
+        };
+      }
+    }
+
+    console.log('[LLM STREAM] stream complete', {
+      totalLength: fullResponse.length,
+      hasYieldedContent,
+    });
+
+    // If no content was yielded at all, send an error
+    if (!hasYieldedContent && fullResponse.length === 0) {
+      console.error('[LLM STREAM] No content generated!');
+      yield {
+        type: 'error',
+        message: 'The model did not generate a response. Please try rephrasing your question.',
+      };
+    }
+
+  } catch (error: any) {
+    console.error('[LLM STREAM] error:', error);
+    yield {
+      type: 'error',
+      message: `Failed to stream response: ${error.message}`,
+    };
+  }
+}
