@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import authRouter from './routers/auth.router';
 import testRouter from './routers/test.router';
+import llmRouter from './routers/llm.router';
 
 dotenv.config();
 
@@ -16,9 +17,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Increase timeout for LLM requests (20 minutes for complex GPU queries)
+app.use((req, res, next) => {
+  req.setTimeout(1200000); // 20 minutes
+  res.setTimeout(1200000); // 20 minutes
+  next();
+});
+
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/test', testRouter);
+app.use('/api/llm', llmRouter);
 
 // Health check
 app.get('/health', (req: Request, res: Response): void => {
