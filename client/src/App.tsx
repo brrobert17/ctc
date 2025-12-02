@@ -1,50 +1,56 @@
-import { createRouter, RouterProvider, createRoute, createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRouter, RouterProvider, createRoute, createRootRoute } from '@tanstack/react-router'
+import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import BrowsePage from './pages/BrowsePage'
-import SellPage from './pages/SellPage'
-import AboutPage from './pages/AboutPage'
+import CarDetailPage from './pages/CarDetailPage'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
 
-// Create a root route
+// Create a root route with shared layout
 const rootRoute = createRootRoute({
   component: () => (
-    <div>
-      <Outlet />
-    </div>
+    <AppLayout />
   ),
 })
 
-// Create the home route
+// Define routes
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: HomePage,
 })
 
-// Create routes for other pages
 const browseRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/browse',
   component: BrowsePage,
 })
 
-const sellRoute = createRoute({
+const carDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/sell',
-  component: SellPage,
+  path: '/listing/$carId',
+  component: CarDetailPage,
 })
 
-const aboutRoute = createRoute({
+const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/about',
-  component: AboutPage,
+  path: '/login',
+  component: LoginPage,
+})
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/signup',
+  component: SignupPage,
 })
 
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
   browseRoute,
-  sellRoute,
-  aboutRoute,
+  carDetailRoute,
+  loginRoute,
+  signupRoute,
 ])
 
 // Create the router
