@@ -1,7 +1,10 @@
 import { Link } from '@tanstack/react-router'
+import { useAuth } from '../../contexts/AuthContext'
 import favicon from '../../assets/favicon.svg'
 
 export function Header() {
+  const { user, isLoggedIn, logout } = useAuth()
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -53,18 +56,34 @@ export function Header() {
           </button>
 
           <div className="flex items-center gap-4 border-l border-slate-800 pl-4">
-            <Link 
-              to="/login" 
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-            >
-              Log in
-            </Link>
-            <Link 
-              to="/signup" 
-              className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 transition-colors"
-            >
-              Sign up
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <span className="text-sm text-slate-300">
+                  Welcome, {user?.firstName}
+                </span>
+                <button
+                  onClick={logout}
+                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 transition-colors"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button placeholder */}
