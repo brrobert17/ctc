@@ -46,7 +46,10 @@ export default function LoginPage() {
           email: data.data.email,
           firstName: data.data.firstName,
           lastName: data.data.lastName,
+          provider: data.data.provider,
+          profilePicture: data.data.profilePicture,
         })
+        
         navigate({ to: '/' })
       } else {
         setError(data.message || 'Login failed')
@@ -156,7 +159,10 @@ export default function LoginPage() {
            </div>
         </div>
         
-        <button className="flex w-full justify-center items-center gap-3 rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-950">
+        <button 
+          onClick={() => window.location.href = '/api/auth/google'}
+          className="flex w-full justify-center items-center gap-3 rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+        >
            <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24"><path d="M12.0003 20.45c-4.6669 0-8.45-3.7831-8.45-8.45 0-4.6669 3.7831-8.45 8.45-8.45 4.6669 0 8.45 3.7831 8.45 8.45 0 4.6669-3.7831 8.45-8.45 8.45Z" fill="#fff" fillOpacity="0" stroke="currentColor" strokeWidth="2"/><path d="M20.3998 12.231c0-.576-.048-1.129-.141-1.663H11.9998v3.144h4.7129c-.203.1.096.818-.448 2.047l-.002.025 2.593 2.008c1.516-1.398 2.391-3.458 2.391-5.876Z" fill="#4285F4"/><path d="M11.9996 20.7999c2.361 0 4.3419-.783 5.7888-2.119l-2.596-2.01c-.7831.526-1.7848.838-3.1928.838-2.2778 0-4.2068-1.539-4.8938-3.608l-.024.002-2.694 2.087.008.023c1.438 2.854 4.383 4.787 7.604 4.787Z" fill="#34A853"/><path d="M7.1059 13.9009c-.175-.526-.275-1.089-.275-1.668s.1-1.142.275-1.668l-.002-.026-2.707-2.104-.012.006c-.687 1.369-1.079 2.919-1.079 4.556s.392 3.187 1.079 4.556l2.721-2.116Z" fill="#FBBC05"/><path d="M11.9996 7.49996c1.284 0 2.436.442 3.342 1.308l2.505-2.505C16.3376 4.88596 14.3576 4 11.9996 4c-3.221 0-6.166 1.933-7.604 4.787l2.707 2.104c.687-2.069 2.616-3.608 4.8938-3.608Z" fill="#EA4335"/></svg>
            Continue with Google
         </button>

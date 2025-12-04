@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import passport from './config/passport';
 import authRouter from './routers/auth.router';
 import testRouter from './routers/test.router';
 import mlRouter from './routers/ml.router';
@@ -16,6 +17,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Passport middleware (without sessions)
+app.use(passport.initialize());
 
 // Routes
 app.use('/api/auth', authRouter);

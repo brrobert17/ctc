@@ -8,12 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  firstName String
-  lastName  String
-  password  String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String
+  lastName    String
+  password    String
+  provider    String   @default("ctc") // "ctc" for custom or "google"
+  profilePicture String? // Google profile picture URL
+  createdAt   DateTime @default(now())
 }
 
 

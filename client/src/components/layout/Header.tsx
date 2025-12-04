@@ -1,9 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthContext'
 import favicon from '../../assets/favicon.svg'
+import ProfileIcon from '../ui/ProfileIcon'
+import { useState } from 'react'
 
 export function Header() {
   const { user, isLoggedIn, logout } = useAuth()
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
@@ -57,17 +60,47 @@ export function Header() {
 
           <div className="flex items-center gap-4 border-l border-slate-800 pl-4">
             {isLoggedIn ? (
-              <>
-                <span className="text-sm text-slate-300">
-                  Welcome, {user?.firstName}
-                </span>
+              <div className="relative">
                 <button
-                  onClick={logout}
-                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 >
-                  Log out
+                  {user && <ProfileIcon user={user} size="md" />}
+                  <span className="text-sm text-slate-300 hidden sm:block">
+                    {user?.firstName}
+                  </span>
                 </button>
-              </>
+                
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-900 rounded-md shadow-lg border border-slate-700 z-50">
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        View Profile
+                      </Link>
+                      <div className="border-t border-slate-700 my-1"></div>
+                      <button
+                        onClick={() => {
+                          logout()
+                          setShowUserMenu(false)
+                        }}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Log out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link 
@@ -96,6 +129,14 @@ export function Header() {
           </button>
         </div>
       </div>
+      
+      {/* Overlay to close dropdown when clicking outside */}
+      {showUserMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowUserMenu(false)}
+        />
+      )}
     </header>
   )
 }

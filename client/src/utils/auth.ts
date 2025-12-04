@@ -3,6 +3,8 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  provider: string;
+  profilePicture?: string;
 }
 
 export interface AuthTokens {

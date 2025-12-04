@@ -7,6 +7,8 @@ import CarDetailPage from './pages/CarDetailPage'
 import EstimationPage from './pages/EstimationPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
+import ProfilePage from './pages/ProfilePage'
 
 // Create a root route with shared layout
 const rootRoute = createRootRoute({
@@ -52,6 +54,18 @@ const signupRoute = createRoute({
   component: SignupPage,
 })
 
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: AuthCallbackPage,
+})
+
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: ProfilePage,
+})
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -60,6 +74,8 @@ const routeTree = rootRoute.addChildren([
   carDetailRoute,
   loginRoute,
   signupRoute,
+  authCallbackRoute,
+  profileRoute,
 ])
 
 // Create the router
