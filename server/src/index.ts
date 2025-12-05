@@ -2,9 +2,11 @@ import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import passport from './config/passport';
 import authRouter from './routers/auth.router';
 import testRouter from './routers/test.router';
 import mlRouter from './routers/ml.router';
+import userRouter from './routers/user.router';
 
 dotenv.config();
 
@@ -17,10 +19,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Passport middleware (without sessions)
+app.use(passport.initialize());
+
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/test', testRouter);
 app.use('/api/ml', mlRouter);
+app.use('/api/user', userRouter);
 
 // Health check
 app.get('/health', (req: Request, res: Response): void => {

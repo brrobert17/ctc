@@ -1,7 +1,13 @@
 import { Link } from '@tanstack/react-router'
+import { useAuth } from '../../contexts/AuthContext'
 import favicon from '../../assets/favicon.svg'
+import ProfileIcon from '../ui/ProfileIcon'
+import { useState } from 'react'
 
 export function Header() {
+  const { user, isLoggedIn, logout } = useAuth()
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -53,18 +59,74 @@ export function Header() {
           </button>
 
           <div className="flex items-center gap-4 border-l border-slate-800 pl-4">
-            <Link 
-              to="/login" 
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-            >
-              Log in
-            </Link>
-            <Link 
-              to="/signup" 
-              className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 transition-colors"
-            >
-              Sign up
-            </Link>
+            {isLoggedIn ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
+                  {user && <ProfileIcon user={user} size="md" />}
+                  <span className="text-sm text-slate-300 hidden sm:block">
+                    {user?.firstName}
+                  </span>
+                </button>
+                
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-900 rounded-md shadow-lg border border-slate-700 z-50">
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        View Profile
+                      </Link>
+                      <Link
+                        to="/saved-estimations"
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Saved Estimations
+                      </Link>
+                      <div className="border-t border-slate-700 my-1"></div>
+                      <button
+                        onClick={() => {
+                          logout()
+                          setShowUserMenu(false)
+                        }}
+                        className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Log out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 transition-colors"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button placeholder */}
@@ -77,6 +139,14 @@ export function Header() {
           </button>
         </div>
       </div>
+      
+      {/* Overlay to close dropdown when clicking outside */}
+      {showUserMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowUserMenu(false)}
+        />
+      )}
     </header>
   )
 }

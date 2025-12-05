@@ -13,7 +13,7 @@ export class MLService {
       console.log('Converted input:', convertedInput);
     }
     
-    // Process model information to get derived features
+    // Process model information to get features
     const modelInfo = await this.processModelInformation(
       convertedInput.model,
       convertedInput.drivetrain,
@@ -61,7 +61,7 @@ export class MLService {
         original_price_usd: mlResponse.predicted_price
       };
     } else {
-      // US market: return as-is
+      // US market
       return {
         ...mlResponse,
         currency: 'USD'

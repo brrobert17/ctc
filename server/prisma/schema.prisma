@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Required for Prisma v6
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String
+  lastName    String
+  password    String
+  provider    String   @default("ctc") // "ctc" for custom or "google"
+  profilePicture String? // Google profile picture URL
+  createdAt   DateTime @default(now())
+  
+  savedEstimations SavedEstimation[]
+}
+
+model SavedEstimation {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  
+  // Car details (input data)
+  year                Int
+  mileage             Int
+  mpg_avg             Float
+  engine_size_l       Float
+  hp                  Int
+  manufacturer        String
+  model               String
+  transmission        String
+  drivetrain          String
+  fuel_type           String
+  exterior_color      String
+  accidents_or_damage Int      // 0 or 1
+  one_owner           Int      // 0 or 1
+  personal_use_only   Int      // 0 or 1
+  danish_market       Int      // 0 or 1
+  
+  // Estimation result
+  predicted_price     Float
+  currency            String?
+  original_price_usd  Float?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("saved_estimations")
+}
+
+

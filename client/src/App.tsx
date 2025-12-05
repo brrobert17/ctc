@@ -1,4 +1,5 @@
 import { createRouter, RouterProvider, createRoute, createRootRoute } from '@tanstack/react-router'
+import { AuthProvider } from './contexts/AuthContext'
 import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import BrowsePage from './pages/BrowsePage'
@@ -6,6 +7,9 @@ import CarDetailPage from './pages/CarDetailPage'
 import EstimationPage from './pages/EstimationPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
+import ProfilePage from './pages/ProfilePage'
+import SavedEstimationsPage from './pages/SavedEstimationsPage'
 
 // Create a root route with shared layout
 const rootRoute = createRootRoute({
@@ -51,6 +55,24 @@ const signupRoute = createRoute({
   component: SignupPage,
 })
 
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: AuthCallbackPage,
+})
+
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: ProfilePage,
+})
+
+const savedEstimationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/saved-estimations',
+  component: SavedEstimationsPage,
+})
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -59,6 +81,9 @@ const routeTree = rootRoute.addChildren([
   carDetailRoute,
   loginRoute,
   signupRoute,
+  authCallbackRoute,
+  profileRoute,
+  savedEstimationsRoute,
 ])
 
 // Create the router
@@ -72,7 +97,11 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
-  return <RouterProvider router={router} />
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  )
 }
 
 export default App
