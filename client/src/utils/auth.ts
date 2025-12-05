@@ -99,3 +99,69 @@ export const deleteUser = async (): Promise<{ success: boolean; message: string 
     throw error;
   }
 };
+
+// Save estimation to database
+export const saveEstimation = async (inputData: any, result: any): Promise<{ success: boolean; message: string; data?: any }> => {
+  try {
+    const response = await fetchWithAuth('http://localhost:3000/api/user/estimations', {
+      method: 'POST',
+      body: JSON.stringify({
+        // Car input data
+        ...inputData,
+        // Estimation result
+        predicted_price: result.predicted_price,
+        currency: result.currency,
+        original_price_usd: result.original_price_usd
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to save estimation');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Save estimation error:', error);
+    throw error;
+  }
+};
+
+// Get user's saved estimations
+export const getSavedEstimations = async (): Promise<{ success: boolean; data: any[] }> => {
+  try {
+    const response = await fetchWithAuth('http://localhost:3000/api/user/estimations');
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch saved estimations');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Get saved estimations error:', error);
+    throw error;
+  }
+};
+
+// Delete a saved estimation
+export const deleteSavedEstimation = async (estimationId: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`http://localhost:3000/api/user/estimations/${estimationId}`, {
+      method: 'DELETE',
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete estimation');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Delete estimation error:', error);
+    throw error;
+  }
+};

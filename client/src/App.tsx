@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import ProfilePage from './pages/ProfilePage'
+import SavedEstimationsPage from './pages/SavedEstimationsPage'
 
 // Create a root route with shared layout
 const rootRoute = createRootRoute({
@@ -66,6 +67,12 @@ const profileRoute = createRoute({
   component: ProfilePage,
 })
 
+const savedEstimationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/saved-estimations',
+  component: SavedEstimationsPage,
+})
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -76,6 +83,7 @@ const routeTree = rootRoute.addChildren([
   signupRoute,
   authCallbackRoute,
   profileRoute,
+  savedEstimationsRoute,
 ])
 
 // Create the router
