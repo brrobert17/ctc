@@ -2,11 +2,13 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from '@tanstack/react-router'
 import ProfileIcon from '../components/ui/ProfileIcon'
 import { useState } from 'react'
+import { deleteUser } from '../utils/auth'
 
 export default function ProfilePage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   if (!user) {
     navigate({ to: '/login' })
@@ -14,12 +16,19 @@ export default function ProfilePage() {
   }
 
   const handleDeleteAccount = async () => {
-    // TODO: Implement delete account API call
-    console.log('Delete account requested')
-    setShowDeleteConfirm(false)
-    // For now, just logout
-    logout()
-    navigate({ to: '/' })
+    try {
+      setIsDeleting(true)
+      await deleteUser()
+    
+      logout()
+      navigate({ to: '/' })
+    } catch (error) {
+      console.error('Failed to delete account:', error)
+
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   return (
@@ -136,9 +145,10 @@ export default function ProfilePage() {
                 </button>
                 <button 
                   onClick={handleDeleteAccount}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors"
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Delete Account
+                  {isDeleting ? 'Deleting...' : 'Delete Account'}
                 </button>
               </div>
             </div>

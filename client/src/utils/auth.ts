@@ -77,3 +77,25 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}): Pro
     headers,
   });
 };
+
+export const deleteUser = async (): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithAuth('http://localhost:3000/api/user/delete', {
+      method: 'DELETE',
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete user');
+    }
+
+    // Clear local storage after successful deletion
+    removeToken();
+    
+    return data;
+  } catch (error) {
+    console.error('Delete user error:', error);
+    throw error;
+  }
+};
