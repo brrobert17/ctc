@@ -1,5 +1,8 @@
-import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
+
+dotenv.config();
+
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import passport from './config/passport';
@@ -7,8 +10,6 @@ import authRouter from './routers/auth.router';
 import testRouter from './routers/test.router';
 import mlRouter from './routers/ml.router';
 import userRouter from './routers/user.router';
-
-dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;

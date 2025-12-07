@@ -1,7 +1,7 @@
 -- CreateTable
-CREATE TABLE "saved_estimations" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+CREATE TABLE "SavedEstimation" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "year" INTEGER NOT NULL,
     "mileage" INTEGER NOT NULL,
@@ -22,8 +22,8 @@ CREATE TABLE "saved_estimations" (
     "currency" TEXT,
     "original_price_usd" DOUBLE PRECISION,
 
-    CONSTRAINT "saved_estimations_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "SavedEstimation_pkey" PRIMARY KEY ("id")
 );
 
 -- AddForeignKey
-ALTER TABLE "saved_estimations" ADD CONSTRAINT "saved_estimations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "SavedEstimation" ADD CONSTRAINT "SavedEstimation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
