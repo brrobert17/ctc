@@ -59,4 +59,46 @@ router.get('/core', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * GET /api/cars/:id
+ * Get a single car by ID with all details
+ * Path params:
+ *   - id: Car ID
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (isNaN(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid car ID',
+      });
+      return;
+    }
+
+    const car = await CarService.getById(id);
+
+    if (!car) {
+      res.status(404).json({
+        success: false,
+        message: 'Car not found',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Car retrieved successfully',
+      data: car,
+    });
+  } catch (error) {
+    console.error('Error fetching car:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+});
+
 export default router;

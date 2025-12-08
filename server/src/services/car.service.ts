@@ -154,4 +154,37 @@ export class CarService {
       },
     };
   }
+
+  /**
+   * Get a single car by ID with all details
+   * @param id - Car ID
+   * @returns Car object with all related data or null if not found
+   */
+  static async getById(id: number) {
+    const car = await prisma.car.findUnique({
+      where: { id },
+      include: {
+        makes: true,
+        models: true,
+        fuel_types: true,
+        body_types: true,
+        colors: true,
+        transmission_types: true,
+        drivetrains: true,
+        listing_types: true,
+        categorys: true,
+        interior_colors: true,
+        car_locations: true,
+        sources: true,
+        car_images: true,
+        car_features: {
+          include: {
+            features: true,
+          },
+        },
+      },
+    });
+
+    return car;
+  }
 }
