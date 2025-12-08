@@ -11,13 +11,14 @@ export interface ListingCardProps {
   location: string
   transmission: string
   fuel: string
-  badge: 'Underpriced' | 'Fairly priced' | 'Overpriced'
+  badge?: 'Underpriced' | 'Fairly priced' | 'Overpriced'
   confidence: 'High' | 'Medium' | 'Low'
   source: string
+  sourceUrl?: string
 }
 
 export function ListingCard({ 
-  id, title, price, fairPrice, image, mileage, year, location, transmission, fuel, badge, confidence, source 
+  id, title, price, fairPrice, image, mileage, year, location, transmission, fuel, badge, confidence, source, sourceUrl
 }: ListingCardProps) {
   
   const badgeColors = {
@@ -45,9 +46,11 @@ export function ListingCard({
           alt={title} 
           className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105" 
         />
-        <div className={`absolute top-2 right-2 px-2 py-1 text-xs font-bold rounded shadow-sm ${badgeColors[badge]}`}>
-          {badge}
-        </div>
+        {badge && (
+          <div className={`absolute top-2 right-2 px-2 py-1 text-xs font-bold rounded shadow-sm ${badgeColors[badge]}`}>
+            {badge}
+          </div>
+        )}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/90 to-transparent p-4 pt-12">
           <div className="flex justify-between items-end">
             <div className="text-white font-bold text-lg">{price.toLocaleString()} DKK</div>
@@ -84,9 +87,10 @@ export function ListingCard({
             View details
           </Link>
           <a 
-            href="#" 
+            href={sourceUrl || '#'} 
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-3 py-2 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-md text-sm font-medium transition-colors"
-            onClick={(e) => e.preventDefault()}
           >
             {source}
           </a>

@@ -107,6 +107,11 @@ export class CarService {
             fuel_type: true,
           },
         },
+        sources: {
+          select: {
+            source: true,
+          },
+        },
         car_images: {
           select: {
             image_url: true,
@@ -132,6 +137,7 @@ export class CarService {
       fuelType: car.fuel_types?.fuel_type || null,
       mileage: car.mileage,
       url: car.url,
+      source: car.sources?.source || null,
     }));
 
     const totalPages = Math.ceil(totalCount / validLimit);
