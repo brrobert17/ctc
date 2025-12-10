@@ -33,25 +33,6 @@ export default function SavedEstimationsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
-      </div>
-    );
-  }
-
-  // Show login prompt if not authenticated
-  if (!isLoggedIn) {
-    return (
-      <LoginPrompt 
-        title="Login Required"
-        message="You need to login to view your saved estimations."
-      />
-    );
-  }
-
   // Fetch saved estimations
   useEffect(() => {
     const fetchEstimations = async () => {
@@ -72,6 +53,25 @@ export default function SavedEstimationsPage() {
       fetchEstimations()
     }
   }, [isLoggedIn])
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!isLoggedIn) {
+    return (
+      <LoginPrompt 
+        title="Login Required"
+        message="You need to login to view your saved estimations."
+      />
+    );
+  }
 
   const handleDelete = async (estimationId: string) => {
     if (!confirm('Are you sure you want to delete this estimation?')) {

@@ -4,28 +4,25 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Required for Prisma v6
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  firstName   String
-  lastName    String
-  password    String
-  provider    String   @default("ctc") // "ctc" for custom or "google"
-  profilePicture String? // Google profile picture URL
-  createdAt   DateTime @default(now())
-  
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  firstName        String
+  lastName         String
+  password         String
+  createdAt        DateTime          @default(now())
+  profilePicture   String?
+  provider         String            @default("ctc")
   savedEstimations SavedEstimation[]
 }
 
 model SavedEstimation {
-  id        String   @id @default(cuid())
-  userId    String
-  createdAt DateTime @default(now())
-  
-  // Car details (input data)
+  id                  Int      @id @default(autoincrement())
+  userId              Int
+  createdAt           DateTime @default(now())
   year                Int
   mileage             Int
   mpg_avg             Float
@@ -37,19 +34,178 @@ model SavedEstimation {
   drivetrain          String
   fuel_type           String
   exterior_color      String
-  accidents_or_damage Int      // 0 or 1
-  one_owner           Int      // 0 or 1
-  personal_use_only   Int      // 0 or 1
-  danish_market       Int      // 0 or 1
-  
-  // Estimation result
+  accidents_or_damage Int
+  one_owner           Int
+  personal_use_only   Int
+  danish_market       Int
   predicted_price     Float
   currency            String?
   original_price_usd  Float?
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@map("saved_estimations")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
 }
 
+model BodyType {
+  id           Int       @id @default(autoincrement())
+  body_type    String?
+  cars         Car[]
+}
 
+model CarFeature {
+  car_id     Int
+  feature_id Int
+  cars       Car     @relation(fields: [car_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  features   Feature @relation(fields: [feature_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([car_id, feature_id])
+}
+
+model CarImage {
+  id        Int     @id @default(autoincrement())
+  car_id    Int?
+  image_url String?
+  image_id  Int?
+  cars      Car?    @relation(fields: [car_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+}
+
+model CarLocation {
+  id           Int     @id @default(autoincrement())
+  car_location String?
+  cars         Car[]
+}
+
+model Car {
+  id                   Int     @id @default(autoincrement())
+  make_id              Int?
+  model_id             Int?
+  fuel_type_id         Int?
+  body_type_id         Int?
+  color_id             Int?
+  transmission_type_id Int?
+  drivetrain_id        Int?
+  listing_type_id      Int?
+  category_id          Int?
+  interior_color_id    Int?
+  car_location_id      Int?
+  source_id            Int?
+  source                         String?
+  name                           String?
+  price                          Int?
+  description                    String?
+  url                            String?
+  first_registration             String?
+  mileage                        Int?
+  model_year                     Int?
+  engine_displacement            String?
+  power                          String?
+  top_speed                      String?
+  acceleration                   String?
+  fuel_consumption               String?
+  co2_emission                   String?
+  euro_standard                  String?
+  weight                         String?
+  towing_weight                  String?
+  doors                          Int?
+  seats                          Int?
+  periodic_tax                   String?
+  vin                            String?
+  trunk_size                     String?
+  width                          String?
+  battery_capacity               String?
+  range                          String?
+  energy_consumption             String?
+  dc_charging_time_10_80_percent String?
+  fast_charging_dc               String?
+  home_charging_ac               String?
+  next_inspection_date           String?
+  latest_inspection_date         String?
+  number_of_gears                Int?
+  number_of_owners               Int?
+  new_price                      String?
+  manufactured                   String?
+  color_description              String?
+  car_features                   CarFeature[]
+  car_images                     CarImage[]        
+  body_types                     BodyType?         @relation(fields: [body_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  car_locations                  CarLocation?      @relation(fields: [car_location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categorys                      Category?          @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  colors                         Color?             @relation(fields: [color_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  drivetrains                    DriveTrain?        @relation(fields: [drivetrain_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fuel_types                     FuelType?         @relation(fields: [fuel_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  interior_colors                InteriorColor?    @relation(fields: [interior_color_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  listing_types                  ListingType?      @relation(fields: [listing_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  makes                          Make?              @relation(fields: [make_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  models                         Model?             @relation(fields: [model_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sources                        Source?            @relation(fields: [source_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  transmission_types             TransmissionType? @relation(fields: [transmission_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Category {
+  id       Int     @id @default(autoincrement())
+  category String?
+  cars     Car[]
+}
+
+model Color {
+  id    Int     @id @default(autoincrement())
+  color String?
+  cars  Car[]
+}
+
+model DriveTrain {
+  id         Int     @id @default(autoincrement())
+  drivetrain String?
+  cars       Car[]
+}
+
+model Feature {
+  id           Int            @id @default(autoincrement())
+  name         String?
+  car_features CarFeature[]
+}
+
+model FuelType {
+  id        Int     @id @default(autoincrement())
+  fuel_type String?
+  cars      Car[]
+}
+
+model InteriorColor {
+  id             Int     @id @default(autoincrement())
+  interior_color String?
+  cars           Car[]
+}
+
+model ListingType {
+  id           Int     @id @default(autoincrement())
+  listing_type String?
+  cars         Car[]
+}
+
+model Make {
+  id     Int      @id @default(autoincrement())
+  make   String?
+  cars   Car[]
+  models Model[]
+}
+
+model Model {
+  id      Int     @id @default(autoincrement())
+  make_id Int?
+  model   String?
+  cars    Car[]
+  makes   Make?   @relation(fields: [make_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Source {
+  id     Int     @id @default(autoincrement())
+  source String?
+  cars   Car[]
+}
+
+model TransmissionType {
+  id                Int     @id @default(autoincrement())
+  transmission_type String?
+  cars              Car[]
+}
