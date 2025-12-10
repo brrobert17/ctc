@@ -3,14 +3,11 @@ import { UserInput, MLModelInput, ValidationResult, PredictionResponse } from '.
 export class MLService {
 
   static async processUserInput(userInput: UserInput): Promise<any> {
-    console.log('Received user input:', userInput);
     
     // Convert Danish units to US units if needed (ML model expects US units)
     let convertedInput = { ...userInput };
     if (userInput.danish_market === 1) {
-      console.log('Converting Danish units to US units for ML model...');
       convertedInput = this.convertDanishToUSUnits(userInput);
-      console.log('Converted input:', convertedInput);
     }
     
     // Process model information to get features
@@ -27,8 +24,6 @@ export class MLService {
       ...modelInfo
     };
     
-    console.log('Processed data for ML model:', processedData);
-    
     return {
       processed_data: processedData,
       original_market: userInput.danish_market,
@@ -42,8 +37,10 @@ export class MLService {
       ...input,
       // Convert mileage: km to miles (1 km = 0.621371 miles)
       mileage: Math.round(input.mileage * 0.621371),
+
       // Convert fuel economy: km/l to mpg (1 km/l = 2.35214 mpg)
       mpg_avg: parseFloat((input.mpg_avg * 2.35214).toFixed(1)),
+
       // Keep danish_market flag for response conversion
       danish_market: input.danish_market
     };
@@ -71,8 +68,6 @@ export class MLService {
 
 
   static async processModelInformation(model: string, drive_train: string, engine_size_l: number, year: number) {
-    console.log('Model processing input:', { model, drive_train, engine_size_l, year });
-    
     // Extract Model variant from base model
     const modelVariant = this.extractModelVariant(model);
     
@@ -91,8 +86,6 @@ export class MLService {
       model_drivetrain: modelDrivetrain,
       model_full: modelFull
     };
-    
-    console.log('Model processing output:', modelOutput);
     
     return modelOutput;
   }

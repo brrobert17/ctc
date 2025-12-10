@@ -66,7 +66,6 @@ model CarImage {
   image_url String?
   image_id  Int?
   cars      Car?    @relation(fields: [car_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
 }
 
 model CarLocation {
@@ -139,6 +138,8 @@ model Car {
   models                         Model?             @relation(fields: [model_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sources                        Source?            @relation(fields: [source_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   transmission_types             TransmissionType? @relation(fields: [transmission_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estimated_price                Float?
+  danish_market                  Int? // 1 or 0
 }
 
 model Category {
