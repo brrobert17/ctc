@@ -1,20 +1,21 @@
 # CTC Server
 
-Express TypeScript server with JWT authentication and JSON database.
+Express TypeScript server for Danish used car marketplace with AI-powered assistant.
 
 ## Features
 
 - ✅ Express.js with TypeScript
 - ✅ JWT Authentication (4-hour expiration)
 - ✅ Password hashing with bcrypt
-- ✅ JSON-based database (lowdb)
+- ✅ PostgreSQL database with Prisma ORM
 - ✅ CORS and Helmet middleware for security
 - ✅ Prettier code formatting
 - ✅ Development hot-reload with ts-node-dev
-- ✅ **LLM Integration** - Ollama-powered used car trading advisor
-- ✅ **Native Web Search** - Ollama web search API (with DuckDuckGo fallback)
-- ✅ **Database Search** - CSV-based car listings search
-- ✅ **Tool Calling** - AI agent with multiple tools (database, web search, market stats)
+- ✅ **LLM Integration** - Mistral 7B AI advisor for Danish car market
+- ✅ **Context Gathering** - Pre-fetches web and database context for enriched responses
+- ✅ **Database Search** - PostgreSQL car listings with comprehensive filters
+- ✅ **Tool Calling** - AI agent with database, web search, and market stats tools
+- ✅ **SSE Streaming** - Real-time streaming responses to client
 
 ## Prerequisites
 
@@ -138,20 +139,24 @@ Authorization: Bearer <your-jwt-token>
 server/
 ├── src/
 │   ├── database/
-│   │   └── db.ts              # Database configuration
+│   │   └── cars.db.ts         # PostgreSQL car database queries (Prisma)
 │   ├── middleware/
 │   │   └── auth.middleware.ts # JWT authentication middleware
 │   ├── routers/
 │   │   ├── auth.router.ts     # Authentication routes
+│   │   ├── llm.router.ts      # AI assistant chat routes (SSE)
 │   │   └── test.router.ts     # Test routes
+│   ├── services/
+│   │   ├── llm.service.ts     # Mistral AI service with tool calling
+│   │   └── web-search.service.ts # Web search integration
 │   ├── utils/
 │   │   └── auth.ts            # Auth utilities (hashing, JWT)
-│   └── index.ts               # Main server file
-├── data/
-│   └── db.json                # JSON database file
+│   └── index.ts               # Main Express server
+├── prisma/
+│   ├── schema.prisma          # Prisma database schema
+│   └── migrations/            # Database migrations
 ├── dist/                      # Compiled JavaScript (after build)
 ├── .env                       # Environment variables (create from .env.example)
-├── .env.example               # Example environment variables
 ├── .prettierrc                # Prettier configuration
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json              # TypeScript configuration
@@ -192,74 +197,60 @@ curl.exe -X GET "http://localhost:3000/api/test/protected" `
   -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 ```
 
-## LLM Integration (Used Car Trading Advisor)
+## AI Assistant (Danish Car Market Advisor)
 
 ### Setup
 
 1. **Install Ollama** from https://ollama.com
-2. **Pull the gpt-oss model:**
-   ```powershell
-   ollama pull gpt-oss
+2. **Pull Mistral 7B:**
+   ```bash
+   ollama pull mistral
    ```
-3. **Get your Ollama API Key** from https://ollama.com/settings/keys
-4. **Add to `.env` file:**
+3. **Optional - Get Ollama API Key** for enhanced web search from https://ollama.com/settings/keys
+4. **Add to `.env` file (optional):**
    ```env
    OLLAMA_API_KEY=your-ollama-api-key-here
    ```
 
 ### Features
 
-- **Native Ollama Web Search** - Uses Ollama's cloud-based web search API (requires API key)
-- **DuckDuckGo Fallback** - Automatically falls back if API key not set or native search fails
-- **Database Search** - Searches local CSV car listings database
-- **Market Statistics** - Provides market overview and pricing trends
-- **GPU Optimized** - Configured for AMD/NVIDIA GPUs with 4K+ token generation and 8K context
-- **Extended Timeouts** - 20-minute timeout supports complex multi-tool queries
-
-### LLM Endpoints
-
-#### Health Check
-```powershell
-curl.exe -X GET "http://localhost:3000/api/llm/health"
-```
-
-#### Simple Prompt
-```powershell
-curl.exe -X POST "http://localhost:3000/api/llm/prompt" -H "Content-Type: application/json" -d '{"prompt":"Is a 2018 Subaru with 80k miles at $22k a good deal?"}'
-```
-
-#### Chat with History
-```powershell
-curl.exe -X POST "http://localhost:3000/api/llm/chat" -H "Content-Type: application/json" -d '{"message":"What Toyota vehicles do we have?", "history":[]}'
-```
+- **Danish Market Specialist** - Trained prompts for Danish automotive market, regulations, and pricing
+- **Context Gathering** - Pre-fetches relevant web and database information before responding
+- **Mistral 7B Model** - 32K context window, 4K token generation for comprehensive responses
+- **Web Search Integration** - Ollama native search (with API key) or DuckDuckGo fallback
+- **PostgreSQL Database** - Real-time queries against Danish car listings
+- **Market Analytics** - Automated statistics and pricing trends
+- **GPU Optimized** - Configured for maximum VRAM utilization and performance
+- **SSE Streaming** - Real-time response streaming to client
 
 ### Available Tools
 
-The AI agent can automatically use these tools:
+The AI agent automatically uses these tools when appropriate:
 
-1. **search_car_database** - Search CSV database by manufacturer, model, price, mileage, etc.
-2. **get_market_stats** - Get overall market statistics
-3. **web_search** - Search the web for current info (native Ollama or DuckDuckGo)
+1. **search_car_database** - Search PostgreSQL database by manufacturer, model, price, year, mileage, fuel type, body type, etc.
+2. **get_market_stats** - Get Danish market statistics and pricing trends
+3. **web_search** - Search the web for reviews, specs, and current information
 
-### Example Queries
+### Usage
 
-```powershell
-# Database search
-curl.exe -X POST "http://localhost:3000/api/llm/prompt" -H "Content-Type: application/json" -d '{"prompt":"Show me all Toyota vehicles under $25,000"}'
+The AI assistant is integrated into the client UI. Simply ask questions like:
+- "Show me VW Golf GTI models"
+- "What BMW 3 Series are available under 300,000 kr?"
+- "Tell me about Toyota Hybrid reliability"
 
-# Web search
-curl.exe -X POST "http://localhost:3000/api/llm/prompt" -H "Content-Type: application/json" -d '{"prompt":"What are current used car market trends?"}'
+The assistant will automatically:
+1. Gather relevant context from web and database
+2. Call appropriate tools to get current data
+3. Stream a comprehensive response in real-time
 
-# Combined (database + web)
-curl.exe -X POST "http://localhost:3000/api/llm/prompt" -H "Content-Type: application/json" -d '{"prompt":"Compare our Honda Civic listings to market prices"}'
+### Testing via API
+
+```bash
+# Health check
+curl http://localhost:3000/api/llm/health
+
+# Chat endpoint (SSE stream)
+curl -X POST http://localhost:3000/api/llm/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Show me all Volkswagen models","history":[]}'
 ```
-
-### Full Testing Guide
-
-See **[TESTING-COMMANDS.md](./TESTING-COMMANDS.md)** for comprehensive test commands and examples.
-
-### Documentation
-
-- **[LLM-ENDPOINTS.md](./LLM-ENDPOINTS.md)** - Detailed API documentation
-- **[LLM-SETUP.md](./LLM-SETUP.md)** - Setup and configuration guide
-- **[TESTING-COMMANDS.md](./TESTING-COMMANDS.md)** - PowerShell test commands
