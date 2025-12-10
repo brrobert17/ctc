@@ -1,150 +1,40 @@
 import { useState, useEffect } from 'react'
 import { FiltersSidebar } from '../components/browse/FiltersSidebar'
 import { ListingCard, type ListingCardProps } from '../components/browse/ListingCard'
-import modely from '../assets/modely.webp'
-import id4 from '../assets/id4.webp'
-import q8 from '../assets/q8.webp'
-import corolla from '../assets/corolla.webp'
-import fiesta from '../assets/fiesta.webp'
-import bmw330 from '../assets/330.webp'
-import cx5 from '../assets/cx5.webp'
-import xc40 from '../assets/xc40.webp'
+import { useCars } from '../hooks/useCars'
+import type { Car } from '../types/car.types'
 
-// Mock Data
-const MOCK_LISTINGS: ListingCardProps[] = [
-  {
-    id: '1',
-    title: '2019 Volkswagen Golf 1.5 TSI',
-    price: 129900,
-    fairPrice: 135000,
-    image: id4, // Using ID4 as placeholder for Golf for now since we don't have Golf asset
-    mileage: 65000,
-    year: 2019,
-    location: 'Copenhagen',
-    transmission: 'Manual',
-    fuel: 'Petrol',
-    badge: 'Underpriced',
-    confidence: 'High',
-    source: 'Bilbasen'
-  },
-  {
-    id: '2',
-    title: '2020 Toyota Corolla Hybrid',
-    price: 185000,
-    fairPrice: 185000,
-    image: corolla,
-    mileage: 45000,
-    year: 2020,
-    location: 'Aarhus',
-    transmission: 'Automatic',
-    fuel: 'Hybrid',
-    badge: 'Fairly priced',
-    confidence: 'Medium',
-    source: 'DBA'
-  },
-  {
-    id: '3',
-    title: '2017 Audi Q8',
-    price: 810000,
-    fairPrice: 795000,
-    image: q8,
-    mileage: 98000,
-    year: 2017,
-    location: 'Odense',
-    transmission: 'Automatic',
-    fuel: 'Diesel',
-    badge: 'Overpriced',
-    confidence: 'High',
-    source: 'Bilbasen'
-  },
-  {
-    id: '4',
-    title: '2021 Tesla Model Y Long Range',
-    price: 359000,
-    fairPrice: 365000,
-    image: modely,
-    mileage: 32000,
-    year: 2021,
-    location: 'Copenhagen',
-    transmission: 'Automatic',
-    fuel: 'Electric',
-    badge: 'Fairly priced',
-    confidence: 'High',
-    source: 'Bilbasen'
-  },
-  {
-    id: '5',
-    title: '2018 Ford Fiesta ST-Line',
-    price: 115000,
-    fairPrice: 120000,
-    image: fiesta,
-    mileage: 55000,
-    year: 2018,
-    location: 'Aalborg',
-    transmission: 'Manual',
-    fuel: 'Petrol',
-    badge: 'Underpriced',
-    confidence: 'High',
-    source: 'DBA'
-  },
-  {
-    id: '6',
-    title: '2022 BMW 330e Touring',
-    price: 395000,
-    fairPrice: 380000,
-    image: bmw330,
-    mileage: 15000,
-    year: 2022,
-    location: 'Copenhagen',
-    transmission: 'Automatic',
-    fuel: 'Hybrid',
-    badge: 'Overpriced',
-    confidence: 'Medium',
-    source: 'Bilbasen'
-  },
-  {
-    id: '7',
-    title: '2016 Mazda CX-5',
-    price: 145000,
-    fairPrice: 145000,
-    image: cx5,
-    mileage: 112000,
-    year: 2016,
-    location: 'Roskilde',
-    transmission: 'Automatic',
-    fuel: 'Petrol',
-    badge: 'Fairly priced',
-    confidence: 'Low',
-    source: 'Bilbasen'
-  },
-  {
-    id: '8',
-    title: '2020 Volvo XC40',
-    price: 310000,
-    fairPrice: 325000,
-    image: xc40,
-    mileage: 42000,
-    year: 2020,
-    location: 'Esbjerg',
-    transmission: 'Automatic',
-    fuel: 'Diesel',
-    badge: 'Underpriced',
-    confidence: 'High',
-    source: 'DBA'
-  }
-]
-
-// Duplicate listings to fill the grid
-const FULL_LISTINGS = [
-  ...MOCK_LISTINGS,
-  ...MOCK_LISTINGS.map(item => ({ ...item, id: (parseInt(item.id) + 8).toString() })),
-  ...MOCK_LISTINGS.map(item => ({ ...item, id: (parseInt(item.id) + 16).toString() }))
-]
+/**
+ * Transform API car data to ListingCard props
+ */
+function transformCarToListing(car: Car): ListingCardProps {
+  return {
+    id: String(car.id),
+    title: `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Unknown Car',
+    price: car.price || 0,
+    fairPrice: car.price || 0, // TODO: Add ML prediction for fair price
+    image: car.image || 'https://via.placeholder.com/400x250?text=No+Image',
+    mileage: car.mileage || 0,
+    year: car.year || 0,
+    location: car.location || 'Unknown',
+    transmission: car.transmission || 'Unknown',
+    fuel: car.fuelType || 'Unknown',
+    // badge: 'Fairly priced', // TODO: Calculate badge based on ML prediction - currently not shown
+    confidence: 'Medium', // TODO: Get confidence from ML model
+    source: car.source || 'Unknown',
+    sourceUrl: car.url || '#',
+  };
+}
 
 export default function BrowsePage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [page, setPage] = useState(1)
+  const limit = 24 // Number of cars per page
+
+  // Fetch cars using React Query
+  const { data, isLoading, isError, error } = useCars({ page, limit })
 
   useEffect(() => {
     const handleScroll = () => {
@@ -239,7 +129,9 @@ export default function BrowsePage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-white">Browse used cars</h1>
-                <p className="text-slate-400 text-sm">Found {FULL_LISTINGS.length} listings</p>
+                <p className="text-slate-400 text-sm">
+                  {isLoading ? 'Loading...' : `Found ${data?.pagination.totalCount || 0} listings`}
+                </p>
               </div>
               
               <div className="flex items-center gap-3">
@@ -254,19 +146,70 @@ export default function BrowsePage() {
               </div>
             </div>
 
+            {/* Error State */}
+            {isError && (
+              <div className="bg-red-900/20 border border-red-800 text-red-400 rounded-lg p-4 mb-6">
+                <p className="font-medium">Error loading cars</p>
+                <p className="text-sm mt-1">{error instanceof Error ? error.message : 'Something went wrong'}</p>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden animate-pulse">
+                    <div className="aspect-[16/10] bg-slate-800" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-slate-800 rounded w-3/4" />
+                      <div className="h-3 bg-slate-800 rounded w-1/2" />
+                      <div className="h-8 bg-slate-800 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Listings Grid */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {FULL_LISTINGS.map(listing => (
-                <ListingCard key={listing.id} {...listing} />
-              ))}
-            </div>
-            
-            {/* Pagination / Load More */}
-            <div className="mt-12 text-center">
-              <button className="bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium px-8 py-3 rounded-md border border-slate-800 transition-colors">
-                Load more cars
-              </button>
-            </div>
+            {!isLoading && !isError && data && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {data.data.map((car) => (
+                    <ListingCard key={car.id} {...transformCarToListing(car)} />
+                  ))}
+                </div>
+                
+                {/* Empty State */}
+                {data.data.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-slate-400">No cars found</p>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {data.pagination.totalPages > 1 && (
+                  <div className="mt-12 flex justify-center items-center gap-4">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={!data.pagination.hasPreviousPage}
+                      className="bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium px-6 py-3 rounded-md border border-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-slate-400">
+                      Page {data.pagination.page} of {data.pagination.totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={!data.pagination.hasNextPage}
+                      className="bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium px-6 py-3 rounded-md border border-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ import testRouter from './routers/test.router';
 import llmRouter from './routers/llm.router';
 import mlRouter from './routers/ml.router';
 import userRouter from './routers/user.router';
+import carRouter from './routers/car.router';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use('/api/test', testRouter);
 app.use('/api/llm', llmRouter);
 app.use('/api/ml', mlRouter);
 app.use('/api/user', userRouter);
+app.use('/api/cars', carRouter);
 
 // Health check
 app.get('/health', (req: Request, res: Response): void => {
