@@ -33,16 +33,36 @@ export function ChatAssistantDrawer() {
   const [thinkingState, setThinkingState] = useState<ThinkingState>({
     isThinking: false
   })
+  const [width, setWidth] = useState(() => {
+    // Responsive default width
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768 ? window.innerWidth : 448 // Full width on mobile, 28rem on desktop
+    }
+    return 448
+  })
+  const [isResizing, setIsResizing] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
   const currentMessageRef = useRef<string>('')
+  const resizeStartX = useRef(0)
+  const resizeStartWidth = useRef(0)
 
   useEffect(() => {
     const handleToggle = () => setIsOpen(prev => !prev)
+    const handleResize = () => {
+      // Auto-adjust width on mobile
+      if (window.innerWidth < 768) {
+        setWidth(window.innerWidth)
+      }
+    }
+    
     window.addEventListener('toggle-ai-chat', handleToggle)
+    window.addEventListener('resize', handleResize)
+    
     return () => {
       window.removeEventListener('toggle-ai-chat', handleToggle)
+      window.removeEventListener('resize', handleResize)
       // Clean up EventSource on unmount
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
@@ -53,6 +73,44 @@ export function ChatAssistantDrawer() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinkingState])
+
+  // Handle resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      
+      const deltaX = resizeStartX.current - e.clientX
+      const newWidth = Math.min(
+        Math.max(resizeStartWidth.current + deltaX, 320), // Min width 320px
+        window.innerWidth * 0.9 // Max 90% of viewport
+      )
+      setWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+    }
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'ew-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing])
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    setIsResizing(true)
+    resizeStartX.current = e.clientX
+    resizeStartWidth.current = width
+  }
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isStreaming) return
@@ -264,6 +322,18 @@ export function ChatAssistantDrawer() {
     sendMessage(text)
   }
 
+  // Clean up markdown content (convert HTML breaks to markdown)
+  const cleanMarkdown = (content: string): string => {
+    return content
+      .replace(/<br\s*\/?>/gi, '  \n') // Convert <br> to markdown line breaks
+      .replace(/&nbsp;/g, ' ') // Convert HTML spaces
+      .replace(/&lt;/g, '<') // Convert HTML entities
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+  }
+
   if (!isOpen) return null
 
   return (
@@ -275,7 +345,22 @@ export function ChatAssistantDrawer() {
       />
       
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-slate-900 shadow-xl border-l border-slate-800 transform transition-transform duration-300 ease-in-out flex flex-col">
+      <div 
+        className="fixed inset-y-0 right-0 z-50 bg-slate-900 shadow-xl border-l border-slate-800 flex flex-col"
+        style={{ 
+          width: `${width}px`,
+          maxWidth: '100vw',
+          transition: isResizing ? 'none' : 'transform 300ms ease-in-out'
+        }}
+      >
+        {/* Resize Handle (hidden on mobile) */}
+        <div
+          className="hidden md:block absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize group hover:bg-sky-500/50 transition-colors"
+          onMouseDown={handleResizeStart}
+          title="Drag to resize"
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-4 -translate-x-1.5" />
+        </div>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800">
           <div>
@@ -322,8 +407,8 @@ export function ChatAssistantDrawer() {
                         rehypePlugins={[rehypeHighlight]}
                         components={{
                           p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                          ul: ({ children }) => <ul className="mb-2 ml-4 list-disc">{children}</ul>,
-                          ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal">{children}</ol>,
+                          ul: ({ children }) => <ul className="mb-2 ml-4 list-disc space-y-1">{children}</ul>,
+                          ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal space-y-1">{children}</ol>,
                           li: ({ children }) => <li className="mb-1">{children}</li>,
                           code: ({ inline, children, ...props }: any) => 
                             inline ? (
@@ -348,12 +433,54 @@ export function ChatAssistantDrawer() {
                               {children}
                             </blockquote>
                           ),
-                          h1: ({ children }) => <h1 className="text-xl font-bold mb-2 text-white">{children}</h1>,
-                          h2: ({ children }) => <h2 className="text-lg font-bold mb-2 text-white">{children}</h2>,
-                          h3: ({ children }) => <h3 className="text-base font-bold mb-1 text-white">{children}</h3>,
+                          h1: ({ children }) => <h1 className="text-xl font-bold mb-2 mt-4 text-white">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-lg font-bold mb-2 mt-3 text-white">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-base font-bold mb-1 mt-2 text-white">{children}</h3>,
+                          table: ({ children }) => (
+                            <div className="overflow-x-auto my-4">
+                              <table className="min-w-full border-collapse border border-slate-700">
+                                {children}
+                              </table>
+                            </div>
+                          ),
+                          thead: ({ children }) => (
+                            <thead className="bg-slate-800">
+                              {children}
+                            </thead>
+                          ),
+                          tbody: ({ children }) => (
+                            <tbody className="divide-y divide-slate-700">
+                              {children}
+                            </tbody>
+                          ),
+                          tr: ({ children }) => (
+                            <tr className="hover:bg-slate-800/50 transition-colors">
+                              {children}
+                            </tr>
+                          ),
+                          th: ({ children }) => (
+                            <th className="px-4 py-2 text-left text-xs font-semibold text-sky-400 uppercase tracking-wider border border-slate-700">
+                              {children}
+                            </th>
+                          ),
+                          td: ({ children }) => (
+                            <td className="px-4 py-3 text-sm text-slate-300 border border-slate-700">
+                              {children}
+                            </td>
+                          ),
+                          hr: () => <hr className="my-4 border-slate-700" />,
+                          input: ({ checked, ...props }: any) => (
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              readOnly
+                              className="mr-2 accent-sky-500"
+                              {...props}
+                            />
+                          ),
                         }}
                       >
-                        {message.content}
+                        {cleanMarkdown(message.content)}
                       </ReactMarkdown>
                     </div>
                   )}

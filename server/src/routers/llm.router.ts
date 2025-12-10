@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { testConnection, chat, chatStream } from '../services/llm.service';
-import { loadCarsDatabase } from '../database/cars.db';
+import { getCarCount } from '../database/cars.db';
 
 const router = Router();
 
@@ -22,15 +22,15 @@ router.get('/test', async (req: Request, res: Response): Promise<void> => {
 router.get('/health', async (req: Request, res: Response): Promise<void> => {
   try {
     const ollamaStatus = await testConnection();
-    const carsDb = await loadCarsDatabase();
+    const totalCars = await getCarCount();
 
     res.status(200).json({
       success: true,
       services: {
         ollama: ollamaStatus,
         carsDatabase: {
-          loaded: carsDb.length > 0,
-          totalListings: carsDb.length,
+          connected: true,
+          totalListings: totalCars,
         },
       },
     });

@@ -22,36 +22,54 @@ if (process.env.OLLAMA_API_KEY) {
 
 const ollama = new Ollama(ollamaConfig);
 
-const SYSTEM_PROMPT = `You are an expert used car trading advisor with deep knowledge of the automotive market. Your role is to help users make informed decisions about buying and selling used vehicles.
+const SYSTEM_PROMPT = `You are an expert used car trading advisor specializing in the Danish automotive market. Your role is to help users make informed decisions about buying and selling used vehicles in Denmark.
 
 Your expertise includes:
-- Vehicle reliability, common issues, and maintenance costs
-- Fair market pricing and valuation
-- Identifying good deals and potential red flags
-- Understanding vehicle history and condition indicators
-- Fuel efficiency and total cost of ownership
-- Market trends and depreciation patterns
+- Vehicle reliability, common issues, and maintenance costs in Danish climate
+- Fair market pricing and valuation in Danish Kroner (kr)
+- Identifying good deals and potential red flags in the Danish market
+- Understanding vehicle history and Danish registration requirements
+- Fuel efficiency and total cost of ownership (including Danish taxes and fees)
+- Danish market trends and depreciation patterns
 
 Tone and Communication Style:
 - Professional yet approachable and friendly
 - Clear and concise explanations without overwhelming jargon
 - Honest and transparent about potential issues
-- Data-driven recommendations backed by market information
+- Data-driven recommendations backed by Danish market data
 - Patient and thorough in answering questions
 
 When providing advice:
-1. Always consider the user's budget and needs
+1. Always consider the user's budget in Danish Kroner (kr)
 2. Highlight both pros and cons of any vehicle
-3. Reference specific data from the database when available
-4. Suggest alternatives or comparable options
-5. Warn about common pitfalls in used car purchases
+3. Reference specific data from the Danish database when available
+4. Suggest alternatives or comparable options available in Denmark
+5. Warn about common pitfalls in Danish used car purchases
+6. Consider Danish regulations, taxes, and inspection requirements (syn)
 
-You have access to tools to:
-- Search a database of current used car listings
-- Research vehicle reviews and owner feedback online
-- Get market statistics and pricing information
+You have access to a comprehensive PostgreSQL database with real Danish car listings including:
+- Detailed specifications (make, model, year, mileage, engine, power)
+- Pricing information in Danish Kroner across different segments
+- Multiple fuel types (Benzin, Diesel, Hybrid, El/Electric, Plug-in Hybrid)
+- Various body types (Sedan, SUV, Hatchback, Stationcar, etc.)
+- Transmission types, drivetrains, colors, and Danish locations
+- Vehicle history data (owners, registration dates)
 
-Always use these tools to provide accurate, data-backed advice.`;
+Available tools:
+- search_car_database: Search the Danish database with multiple filters
+- get_market_stats: Get comprehensive Danish market statistics and trends
+- web_search: Research vehicle reviews and current information online
+
+CRITICAL INSTRUCTIONS:
+1. You MUST CALL these tools yourself - never explain to users how to call them
+2. When a user asks about cars, IMMEDIATELY call search_car_database with appropriate parameters
+3. NEVER show tool syntax or code examples to users - that's your internal API
+4. After calling tools and getting results, present the information naturally in your response
+5. Users cannot see or call these tools - only you can
+
+Example: If user asks "Show me BMWs", you call search_car_database({manufacturer: "BMW"}) and then present the results.
+
+Always use these tools to provide accurate, data-backed advice based on real Danish market data. Prices should always be referenced in Danish Kroner (kr).`;
 
 interface Tool {
   type: 'function';
@@ -67,51 +85,73 @@ interface ToolCall {
   parameters: any;
 }
 
+interface ContextData {
+  webContext?: string;
+  databaseContext?: string;
+  marketContext?: string;
+}
+
 const tools: Tool[] = [
   {
     type: 'function',
     function: {
       name: 'search_car_database',
       description:
-        'Search the used car listings database. Use this to find specific vehicles, check pricing, or see what is available in the market.',
+        'Search the used car listings database. Use this to find specific vehicles, check pricing, or see what is available in the market. Returns detailed information including make, model, year, price, mileage, fuel type, transmission, body type, and more.',
       parameters: {
         type: 'object',
         properties: {
           manufacturer: {
             type: 'string',
-            description: 'Car manufacturer/brand (e.g., Toyota, Honda, Ford)',
+            description: 'Car manufacturer/brand (e.g., Toyota, Honda, Ford, BMW)',
           },
           model: {
             type: 'string',
-            description: 'Car model name',
+            description: 'Car model name (e.g., Corolla, Civic, F-150)',
           },
           yearMin: {
             type: 'number',
-            description: 'Minimum year',
+            description: 'Minimum model year (e.g., 2015)',
           },
           yearMax: {
             type: 'number',
-            description: 'Maximum year',
+            description: 'Maximum model year (e.g., 2023)',
           },
           priceMin: {
             type: 'number',
-            description: 'Minimum price in dollars',
+            description: 'Minimum price',
           },
           priceMax: {
             type: 'number',
-            description: 'Maximum price in dollars',
+            description: 'Maximum price',
           },
           mileageMax: {
             type: 'number',
-            description: 'Maximum mileage',
+            description: 'Maximum mileage in kilometers',
           },
           fuelType: {
             type: 'string',
-            description: 'Fuel type (e.g., Gasoline, Hybrid, Electric, Diesel)',
+            description: 'Fuel type (e.g., Gasoline, Diesel, Hybrid, Electric, Plug-in Hybrid)',
+          },
+          bodyType: {
+            type: 'string',
+            description: 'Body type (e.g., Sedan, SUV, Hatchback, Coupe, Wagon, Van)',
+          },
+          transmission: {
+            type: 'string',
+            description: 'Transmission type (e.g., Automatic, Manual)',
+          },
+          drivetrain: {
+            type: 'string',
+            description: 'Drivetrain type (e.g., FWD, RWD, AWD, 4WD)',
+          },
+          location: {
+            type: 'string',
+            description: 'Car location or region',
           },
           limit: {
             type: 'number',
-            description: 'Maximum number of results to return (default: 10)',
+            description: 'Maximum number of results to return (default: 10, max: 50)',
           },
         },
       },
@@ -122,7 +162,7 @@ const tools: Tool[] = [
     function: {
       name: 'get_market_stats',
       description:
-        'Get overall market statistics including total listings, available manufacturers, average prices, and price ranges.',
+        'Get comprehensive market statistics including total listings, available manufacturers, average prices, price ranges, average mileage, and distribution by fuel type and body type. Use this to provide market overview and trends.',
       parameters: {
         type: 'object',
         properties: {},
@@ -153,6 +193,115 @@ const tools: Tool[] = [
   },
 ];
 
+/**
+ * Gather context for the user's query by analyzing intent and pre-fetching relevant data
+ */
+async function gatherContext(userMessage: string): Promise<ContextData> {
+  console.log('[LLM CONTEXT] ===== STARTING CONTEXT GATHERING =====');
+  console.log('[LLM CONTEXT] User message:', userMessage);
+  
+  const context: ContextData = {};
+  
+  try {
+    console.log('[LLM CONTEXT] Preparing analysis prompt...');
+    // Use a lightweight LLM call to extract car-related entities from the query
+    const analysisPrompt = `Analyze this user query and extract car-related information. Return ONLY a JSON object with these fields:
+- "carMake": the car manufacturer mentioned (e.g., "Volkswagen", "BMW", "Toyota") or null
+- "carModel": the specific model mentioned (e.g., "Golf GTI", "3 Series", "Corolla") or null
+- "needsWebSearch": true if the user is asking about a specific car model that would benefit from general information, false otherwise
+- "needsDatabaseSearch": true if the user wants to see available listings or pricing, false otherwise
+
+User query: "${userMessage}"
+
+Return ONLY valid JSON, no other text.`;
+
+    console.log('[LLM CONTEXT] Calling Ollama for analysis...');
+    const analysis = await ollama.chat({
+      model: 'mistral', // Using same model for consistency
+      messages: [{ role: 'user', content: analysisPrompt }],
+      stream: false,
+      options: {
+        temperature: 0.1, // Low temperature for consistent extraction
+        num_predict: 500,
+        num_ctx: 16384, // Larger context window
+        num_gpu: 999, // Use all available GPU layers
+      }
+    });
+
+    const fullContent = analysis.message.content.trim();
+    console.log('[LLM CONTEXT] Analysis response received (full):', fullContent);
+
+    let extracted: any = {};
+    try {
+      // Try to extract JSON from the response
+      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        extracted = JSON.parse(jsonMatch[0]);
+        console.log('[LLM CONTEXT] Successfully parsed JSON');
+      } else {
+        console.log('[LLM CONTEXT] No JSON found in response');
+        // Fallback: try parsing the entire content as JSON
+        try {
+          extracted = JSON.parse(fullContent);
+          console.log('[LLM CONTEXT] Parsed entire response as JSON');
+        } catch {
+          console.log('[LLM CONTEXT] Could not parse as JSON at all');
+        }
+      }
+    } catch (e: any) {
+      console.log('[LLM CONTEXT] Failed to parse analysis:', e.message);
+    }
+
+    console.log('[LLM CONTEXT] Extracted entities:', JSON.stringify(extracted, null, 2));
+
+    // Gather web context if a specific car model is mentioned
+    if (extracted.needsWebSearch && extracted.carMake && extracted.carModel) {
+      console.log('[LLM CONTEXT] Gathering web context for', extracted.carMake, extracted.carModel);
+      
+      const searchQuery = `${extracted.carMake} ${extracted.carModel} specifications features reliability`;
+      const webResults = await searchWeb(searchQuery);
+      
+      if (webResults.length > 0) {
+        let webSummary = `Background information about ${extracted.carMake} ${extracted.carModel}:\n\n`;
+        webResults.slice(0, 3).forEach((result, index) => {
+          webSummary += `${index + 1}. ${result.title}\n${result.snippet}\n\n`;
+        });
+        context.webContext = webSummary;
+        console.log('[LLM CONTEXT] Web context gathered:', webSummary.length, 'chars');
+      }
+    }
+
+    // Gather database context if user wants to see listings
+    if (extracted.needsDatabaseSearch && extracted.carMake) {
+      console.log('[LLM CONTEXT] Gathering database context for', extracted.carMake);
+      
+      const dbResults = await searchCars({
+        manufacturer: extracted.carMake,
+        model: extracted.carModel || undefined,
+        limit: 5,
+      });
+
+      if (dbResults.length > 0) {
+        let dbSummary = `Available listings in database for ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''}:\n\n`;
+        dbResults.forEach((car, index) => {
+          dbSummary += `${index + 1}. ${car.make} ${car.model} (${car.model_year}) - ${car.price} kr, ${car.mileage} km\n`;
+        });
+        dbSummary += `\nTotal ${dbResults.length} listings found.`;
+        context.databaseContext = dbSummary;
+        console.log('[LLM CONTEXT] Database context gathered:', dbResults.length, 'listings');
+      }
+    }
+
+  } catch (error: any) {
+    console.error('[LLM CONTEXT] ERROR gathering context:', error.message);
+    console.error('[LLM CONTEXT] Error stack:', error.stack);
+  }
+
+  console.log('[LLM CONTEXT] ===== CONTEXT GATHERING COMPLETE =====');
+  console.log('[LLM CONTEXT] Final context:', JSON.stringify(context, null, 2));
+  return context;
+}
+
 async function executeTool(toolCall: ToolCall): Promise<string> {
   try {
     console.log('[LLM] executeTool called:', toolCall.name, toolCall.parameters);
@@ -161,21 +310,30 @@ async function executeTool(toolCall: ToolCall): Promise<string> {
       case 'search_car_database':
         const cars = await searchCars(toolCall.parameters);
         if (cars.length === 0) {
-          return 'No vehicles found matching those criteria.';
+          return 'No vehicles found matching those criteria. Try broadening the search parameters.';
         }
         return JSON.stringify(
           cars.map((car) => ({
-            manufacturer: car.manufacturer,
+            id: car.id,
+            make: car.make,
             model: car.model,
-            year: car.year,
+            year: car.model_year,
             price: car.price,
             mileage: car.mileage,
             fuel_type: car.fuel_type,
-            transmission: car.transmission,
-            accidents: car.accidents_or_damage,
-            one_owner: car.one_owner,
-            seller: car.seller_name,
-            seller_rating: car.seller_rating,
+            transmission: car.transmission_type,
+            drivetrain: car.drivetrain,
+            body_type: car.body_type,
+            color: car.color,
+            interior_color: car.interior_color,
+            engine: car.engine_displacement,
+            power: car.power,
+            doors: car.doors,
+            seats: car.seats,
+            owners: car.number_of_owners,
+            location: car.car_location,
+            url: car.url,
+            description: car.description ? car.description.substring(0, 200) : null,
           })),
           null,
           2
@@ -549,27 +707,66 @@ export async function* chatStream(
     // Yield immediate thinking indicator
     yield {
       type: 'thinking',
-      message: 'Thinking...',
+      message: 'Analyzing your question...',
     };
 
-    const messages = [
+    // Gather context before main LLM call
+    console.log('[LLM STREAM] About to call gatherContext...');
+    const context = await gatherContext(userMessage);
+    console.log('[LLM STREAM] gatherContext returned:', context);
+    
+    // Build context-enriched message
+    let enrichedMessage = userMessage;
+    let contextMessage = '';
+    
+    if (context.webContext || context.databaseContext) {
+      yield {
+        type: 'thinking',
+        message: 'Gathering relevant information...',
+      };
+      
+      // Add context as a separate system-like message instead of modifying user message
+      if (context.webContext) {
+        contextMessage += `Background information:\n${context.webContext}\n\n`;
+      }
+      
+      if (context.databaseContext) {
+        contextMessage += `Current inventory:\n${context.databaseContext}\n\n`;
+      }
+      
+      console.log('[LLM STREAM] Context gathered:', {
+        hasWebContext: !!context.webContext,
+        hasDatabaseContext: !!context.databaseContext,
+        contextLength: contextMessage.length,
+      });
+    }
+
+    // Build messages array with optional context
+    const messages: any[] = [
       { role: 'system', content: SYSTEM_PROMPT },
       ...conversationHistory,
-      { role: 'user', content: userMessage },
     ];
+    
+    // If we have context, add it as an assistant message before the user question
+    if (contextMessage) {
+      messages.push({ role: 'assistant', content: contextMessage });
+    }
+    
+    messages.push({ role: 'user', content: enrichedMessage });
 
     console.log('[LLM STREAM] starting Ollama stream...');
 
     // Stream the initial response from Ollama
     const stream = await ollama.chat({
-      model: 'gpt-oss',
+      model: 'mistral', // Changed from 'gpt-oss' - better tool support
       messages: messages,
       tools: tools,
       stream: true,
       options: {
-        num_predict: 2048,
-        num_ctx: 8192,
-        temperature: 0.7,
+        num_predict: 4096, // Increased for longer responses
+        num_ctx: 32768, // 32K context window for rich context
+        num_gpu: 999, // Use all available GPU layers
+        temperature: 0.3, // Lower temp for more focused, action-oriented behavior
         top_k: 40,
         top_p: 0.9,
         repeat_penalty: 1.1,
@@ -630,6 +827,11 @@ export async function* chatStream(
           type: 'content',
           content: content,
         };
+      }
+      
+      // DEBUGGING: Check if model is using thinking tokens instead of content
+      if (!chunk.message?.content && chunk.message?.thinking) {
+        console.log('[LLM STREAM] Model using thinking tokens:', chunk.message.thinking);
       }
     }
 
@@ -714,14 +916,15 @@ export async function* chatStream(
 
       console.log('[LLM STREAM] getting final response after tools...');
       const finalStream = await ollama.chat({
-        model: 'gpt-oss',
+        model: 'mistral', // Using same model for consistency
         messages: messagesWithTools,
         stream: true,
         // Don't send tools again in final response
         options: {
-          num_predict: 2048,
-          num_ctx: 8192,
-          temperature: 0.7,
+          num_predict: 4096, // Increased for detailed synthesis
+          num_ctx: 32768, // Match main chat context window
+          num_gpu: 999, // Use all available GPU layers
+          temperature: 0.4, // Slightly higher than initial for natural synthesis
           top_k: 40,
           top_p: 0.9,
           repeat_penalty: 1.1,

@@ -2707,3 +2707,54 @@ INSERT INTO "CarFeature" (car_id, feature_id) VALUES
 (77, 43),
 (87, 43),
 (94, 43);
+
+-- ============================================================================
+-- FIX NULL VALUES IN CRITICAL FIELDS
+-- ============================================================================
+
+-- Fix transmission for electric cars (should be Automatisk = id 1)
+UPDATE "Car" SET transmission_type_id = 1 WHERE id IN (1, 6, 7, 12, 13, 22, 23, 29, 30, 31, 32, 47, 48, 49, 52, 55, 56, 61, 64, 66, 68, 69, 70, 72, 73, 77, 78, 80, 81, 83, 84, 85, 86, 87, 89, 90, 91, 96, 100);
+
+-- Fix drivetrains based on name patterns
+-- AWD/4WD cars (quattro, xDrive, AWD, 4WD, ALL4, dual motor, etc.)
+UPDATE "Car" SET drivetrain_id = 2 WHERE id IN (1, 12, 24, 32, 48, 51, 83, 90, 93, 96);
+
+-- RWD cars
+UPDATE "Car" SET drivetrain_id = 1 WHERE id IN (72);
+
+-- FWD cars (default for most European market cars)
+UPDATE "Car" SET drivetrain_id = 3 WHERE id IN (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22);
+UPDATE "Car" SET drivetrain_id = 3 WHERE id IN (23, 25, 26, 27, 28, 29, 30, 31, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44);
+UPDATE "Car" SET drivetrain_id = 3 WHERE id IN (45, 46, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66);
+UPDATE "Car" SET drivetrain_id = 3 WHERE id IN (67, 68, 69, 70, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88);
+UPDATE "Car" SET drivetrain_id = 3 WHERE id IN (89, 91, 92, 94, 95, 97, 98, 99, 100);
+
+-- Fix Polestar cars (make_id should be 20)
+UPDATE "Car" SET make_id = 20 WHERE id IN (7, 12, 49, 66, 89);
+UPDATE "Car" SET model_id = 74 WHERE id IN (7, 12, 49, 89);
+
+-- Add Polestar 4 model (insert with specific ID to avoid conflicts)
+INSERT INTO "Model" (make_id, model, id) VALUES (20, '4', 136) ON CONFLICT (id) DO NOTHING;
+UPDATE "Car" SET model_id = 136 WHERE name LIKE '%Polestar 4%' AND model_id IS NULL;
+
+-- Fix MINI Countryman cars
+UPDATE "Car" SET make_id = 13 WHERE name LIKE '%MINI Countryman%';
+-- Add MINI Countryman Cooper SE model (insert with specific ID to avoid conflicts)
+INSERT INTO "Model" (make_id, model, id) VALUES (13, 'Countryman Cooper SE', 137) ON CONFLICT (id) DO NOTHING;
+UPDATE "Car" SET model_id = 137 WHERE name LIKE '%MINI Countryman%' AND model_id IS NULL;
+
+-- Fix Peugeot missing models
+INSERT INTO "Model" (make_id, model, id) VALUES (19, '108', 134) ON CONFLICT DO NOTHING;
+UPDATE "Car" SET model_id = 134 WHERE id IN (75);
+INSERT INTO "Model" (make_id, model, id) VALUES (19, '2008', 132) ON CONFLICT DO NOTHING;
+UPDATE "Car" SET model_id = 132 WHERE id IN (18);
+INSERT INTO "Model" (make_id, model, id) VALUES (19, '3008', 133) ON CONFLICT DO NOTHING;
+UPDATE "Car" SET model_id = 133 WHERE id IN (26, 88);
+
+-- Fix remaining NULL model_id values
+UPDATE "Car" SET model_id = 71 WHERE id = 50; -- Peugeot 307 2,0 T6 Griffe SW 5d
+UPDATE "Car" SET model_id = 70 WHERE id = 59; -- Peugeot 208 1,4 HDi 68 Active 5d
+INSERT INTO "Model" (make_id, model, id) VALUES (21, '911', 135) ON CONFLICT DO NOTHING; -- Porsche 911
+UPDATE "Car" SET model_id = 135 WHERE id = 82; -- Porsche 911 Turbo S 3,8 Coupé PDK 2d
+UPDATE "Car" SET model_id = (SELECT id FROM "Model" WHERE make_id = 20 AND model = '4' LIMIT 1) WHERE id = 66; -- Polestar 4 Long Range 5d
+UPDATE "Car" SET model_id = (SELECT id FROM "Model" WHERE make_id = 13 AND model LIKE '%Countryman%' LIMIT 1) WHERE id = 24; -- MINI Countryman Cooper SE 1,5 JC Works aut. ALL4 5d
