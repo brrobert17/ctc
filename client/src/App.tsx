@@ -1,5 +1,6 @@
 import { createRouter, RouterProvider, createRoute, createRootRoute } from '@tanstack/react-router'
 import { AuthProvider } from './contexts/AuthContext'
+import { ComparisonProvider } from './contexts/ComparisonContext'
 import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import BrowsePage from './pages/BrowsePage'
@@ -10,6 +11,7 @@ import SignupPage from './pages/SignupPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import ProfilePage from './pages/ProfilePage'
 import SavedEstimationsPage from './pages/SavedEstimationsPage'
+import ComparisonPage from './pages/ComparisonPage'
 
 // Create a root route with shared layout
 const rootRoute = createRootRoute({
@@ -73,6 +75,12 @@ const savedEstimationsRoute = createRoute({
   component: SavedEstimationsPage,
 })
 
+const compareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/compare',
+  component: ComparisonPage,
+})
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -84,6 +92,7 @@ const routeTree = rootRoute.addChildren([
   authCallbackRoute,
   profileRoute,
   savedEstimationsRoute,
+  compareRoute,
 ])
 
 // Create the router
@@ -99,7 +108,9 @@ declare module '@tanstack/react-router' {
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <ComparisonProvider>
+        <RouterProvider router={router} />
+      </ComparisonProvider>
     </AuthProvider>
   )
 }

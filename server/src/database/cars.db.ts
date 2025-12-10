@@ -94,11 +94,13 @@ export const searchCars = async (query: {
   limit?: number;
 }): Promise<CarListing[]> => {
   const limit = query.limit || 10;
+  
+  console.log('[DB] searchCars called with:', JSON.stringify(query, null, 2));
 
   // Build the where clause dynamically
   const where: any = {};
 
-  // Filter by make (manufacturer)
+  // Filter by make (manufacturer) - always required if provided
   if (query.manufacturer) {
     where.makes = {
       make: {
@@ -108,14 +110,25 @@ export const searchCars = async (query: {
     };
   }
 
-  // Filter by model
+  // Filter by model - use flexible tokenized search
+  // Extract key tokens from model string (e.g., "3 Series" -> "3")
   if (query.model) {
-    where.models = {
-      model: {
-        contains: query.model,
-        mode: 'insensitive',
-      },
-    };
+    const modelTokens = query.model.split(/\s+/).filter(token => token.length > 0);
+    
+    if (modelTokens.length > 0) {
+      // Create OR conditions for each token to be more flexible
+      // This helps match "3 Series" to "320i", "330e", etc.
+      const firstToken = modelTokens[0]; // e.g., "3" from "3 Series"
+      
+      console.log('[DB] Tokenized model:', query.model, '-> searching for:', firstToken);
+      
+      where.models = {
+        model: {
+          contains: firstToken, // Match primary identifier
+          mode: 'insensitive',
+        },
+      };
+    }
   }
 
   // Filter by year range
@@ -229,7 +242,7 @@ export const searchCars = async (query: {
   }
 
   // Query the database with relations
-  const cars = await prisma.car.findMany({
+  let cars = await prisma.car.findMany({
     where,
     take: limit,
     include: {
@@ -249,8 +262,40 @@ export const searchCars = async (query: {
     },
   });
 
+  console.log('[DB] Initial query returned', cars.length, 'results');
+  
+  // Fallback: if no results with model filter, try brand-only search
+  if (cars.length === 0 && query.model && query.manufacturer) {
+    console.log('[DB] No results with model filter, falling back to brand-only search for', query.manufacturer);
+    
+    // Remove model filter and try again
+    const { models, ...whereWithoutModel } = where;
+    
+    cars = await prisma.car.findMany({
+      where: whereWithoutModel,
+      take: limit,
+      include: {
+        makes: true,
+        models: true,
+        fuel_types: true,
+        transmission_types: true,
+        drivetrains: true,
+        body_types: true,
+        colors: true,
+        interior_colors: true,
+        car_locations: true,
+        sources: true,
+      },
+      orderBy: {
+        id: 'desc',
+      },
+    });
+    
+    console.log('[DB] Fallback query returned', cars.length, 'results');
+  }
+
   // Map to CarListing interface
-  return cars.map((car) => ({
+  const results = cars.map((car) => ({
     id: car.id,
     make: car.makes?.make || null,
     model: car.models?.model || null,
@@ -275,6 +320,9 @@ export const searchCars = async (query: {
     source: car.sources?.source || car.source,
     car_location: car.car_locations?.car_location || null,
   }));
+  
+  console.log('[DB] Returning', results.length, 'formatted results');
+  return results;
 };
 
 /**

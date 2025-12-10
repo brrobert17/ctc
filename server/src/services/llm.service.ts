@@ -273,22 +273,33 @@ Return ONLY valid JSON, no other text.`;
 
     // Gather database context if user wants to see listings
     if (extracted.needsDatabaseSearch && extracted.carMake) {
-      console.log('[LLM CONTEXT] Gathering database context for', extracted.carMake);
+      console.log('[LLM CONTEXT] Gathering database context for', extracted.carMake, extracted.carModel || '(any model)');
       
-      const dbResults = await searchCars({
-        manufacturer: extracted.carMake,
-        model: extracted.carModel || undefined,
-        limit: 5,
-      });
-
-      if (dbResults.length > 0) {
-        let dbSummary = `Available listings in database for ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''}:\n\n`;
-        dbResults.forEach((car, index) => {
-          dbSummary += `${index + 1}. ${car.make} ${car.model} (${car.model_year}) - ${car.price} kr, ${car.mileage} km\n`;
+      try {
+        const dbResults = await searchCars({
+          manufacturer: extracted.carMake,
+          model: extracted.carModel || undefined,
+          limit: 5,
         });
-        dbSummary += `\nTotal ${dbResults.length} listings found.`;
-        context.databaseContext = dbSummary;
-        console.log('[LLM CONTEXT] Database context gathered:', dbResults.length, 'listings');
+
+        console.log('[LLM CONTEXT] Database query returned', dbResults.length, 'results');
+        
+        if (dbResults.length > 0) {
+          let dbSummary = `Available listings in database for ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''}:\n\n`;
+          dbResults.forEach((car, index) => {
+            dbSummary += `${index + 1}. ${car.make} ${car.model} (${car.model_year}) - ${car.price} kr, ${car.mileage} km\n`;
+          });
+          dbSummary += `\nTotal ${dbResults.length} listings found.`;
+          context.databaseContext = dbSummary;
+          console.log('[LLM CONTEXT] Database context gathered:', dbResults.length, 'listings');
+        } else {
+          console.log('[LLM CONTEXT] No database results found for', extracted.carMake);
+          context.marketContext = `No ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''} listings found in the database. You may want to search the web for general information about this vehicle or suggest alternatives.`;
+        }
+      } catch (dbError: any) {
+        console.error('[LLM CONTEXT] Database search error:', dbError.message);
+        console.error('[LLM CONTEXT] Stack:', dbError.stack);
+        context.marketContext = `Database search failed. You should search the web for information about ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''} instead.`;
       }
     }
 
@@ -719,24 +730,29 @@ export async function* chatStream(
     let enrichedMessage = userMessage;
     let contextMessage = '';
     
-    if (context.webContext || context.databaseContext) {
+    if (context.webContext || context.databaseContext || context.marketContext) {
       yield {
         type: 'thinking',
         message: 'Gathering relevant information...',
       };
       
-      // Add context as a separate system-like message instead of modifying user message
+      // Build context message with explicit instructions
+      if (context.databaseContext) {
+        contextMessage += `DATABASE RESULTS (ALREADY RETRIEVED):\n${context.databaseContext}\n\nIMPORTANT: Present these results to the user naturally. Do not explain tools or say "I can search" - the data is already here above.\n\n`;
+      }
+      
       if (context.webContext) {
         contextMessage += `Background information:\n${context.webContext}\n\n`;
       }
       
-      if (context.databaseContext) {
-        contextMessage += `Current inventory:\n${context.databaseContext}\n\n`;
+      if (context.marketContext) {
+        contextMessage += `${context.marketContext}\n\n`;
       }
       
       console.log('[LLM STREAM] Context gathered:', {
         hasWebContext: !!context.webContext,
         hasDatabaseContext: !!context.databaseContext,
+        hasMarketContext: !!context.marketContext,
         contextLength: contextMessage.length,
       });
     }
@@ -747,9 +763,13 @@ export async function* chatStream(
       ...conversationHistory,
     ];
     
-    // If we have context, add it as an assistant message before the user question
+    // If we have database context, inject it as a system message AFTER the conversation
+    // This makes it impossible for the model to miss
     if (contextMessage) {
-      messages.push({ role: 'assistant', content: contextMessage });
+      messages.push({ 
+        role: 'system', 
+        content: `CONTEXT FOR CURRENT QUERY:\n${contextMessage}` 
+      });
     }
     
     messages.push({ role: 'user', content: enrichedMessage });
@@ -776,14 +796,14 @@ export async function* chatStream(
     let fullResponse = '';
     let toolCalls: any[] = [];
     let hasYieldedContent = false;
+    let chunkCount = 0;
+    let contentChunks = 0;
+    let finalChunkCount = 0;
+    let finalContentChunks = 0;
     
     // Process the stream
     for await (const chunk of stream) {
-      console.log('[LLM STREAM] chunk received', {
-        hasToolCalls: !!chunk.message?.tool_calls,
-        hasContent: !!chunk.message?.content,
-        contentLength: chunk.message?.content?.length || 0,
-      });
+      chunkCount++;
 
       // Check if this chunk contains tool calls
       if (chunk.message?.tool_calls && chunk.message.tool_calls.length > 0) {
@@ -821,8 +841,8 @@ export async function* chatStream(
         const content = chunk.message.content;
         fullResponse += content;
         hasYieldedContent = true;
+        contentChunks++;
         
-        console.log('[LLM STREAM] yielding content chunk', content.length, 'chars');
         yield {
           type: 'content',
           content: content,
@@ -836,9 +856,10 @@ export async function* chatStream(
     }
 
     console.log('[LLM STREAM] initial stream complete', {
-      fullResponseLength: fullResponse.length,
-      toolCallsCount: toolCalls.length,
-      hasYieldedContent,
+      chunks: chunkCount,
+      contentChunks: contentChunks,
+      responseLength: fullResponse.length,
+      toolCalls: toolCalls.length,
     });
 
     // If tools were called, execute them and get final response
@@ -932,21 +953,27 @@ export async function* chatStream(
       });
 
       let finalResponseReceived = false;
+      
       for await (const chunk of finalStream) {
-        console.log('[LLM STREAM] final stream chunk:', JSON.stringify(chunk).slice(0, 200));
+        finalChunkCount++;
         if (chunk.message?.content) {
           const content = chunk.message.content;
           fullResponse += content;
           hasYieldedContent = true;
           finalResponseReceived = true;
+          finalContentChunks++;
           
-          console.log('[LLM STREAM] final content chunk', content.length, 'chars');
           yield {
             type: 'content',
             content: content,
           };
         }
       }
+      
+      console.log('[LLM STREAM] final stream complete', {
+        chunks: finalChunkCount,
+        contentChunks: finalContentChunks,
+      });
       
       // If tools were executed but model didn't generate a response, create a summary
       if (!finalResponseReceived && toolMessages.length > 0) {
@@ -997,9 +1024,10 @@ export async function* chatStream(
       }
     }
 
-    console.log('[LLM STREAM] stream complete', {
+    console.log('[LLM STREAM] all streams complete', {
       totalLength: fullResponse.length,
-      hasYieldedContent,
+      totalChunks: chunkCount + finalChunkCount,
+      contentChunks: contentChunks + finalContentChunks,
     });
 
     // If no content was yielded at all, send an error
