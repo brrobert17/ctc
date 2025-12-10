@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import passport from './config/passport';
 import authRouter from './routers/auth.router';
 import testRouter from './routers/test.router';
+import llmRouter from './routers/llm.router';
 import mlRouter from './routers/ml.router';
 import userRouter from './routers/user.router';
 
@@ -23,9 +24,17 @@ app.use(express.urlencoded({ extended: true }));
 // Passport middleware (without sessions)
 app.use(passport.initialize());
 
+// Increase timeout for LLM requests (20 minutes for complex GPU queries)
+app.use((req, res, next) => {
+  req.setTimeout(1200000); // 20 minutes
+  res.setTimeout(1200000); // 20 minutes
+  next();
+});
+
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/test', testRouter);
+app.use('/api/llm', llmRouter);
 app.use('/api/ml', mlRouter);
 app.use('/api/user', userRouter);
 

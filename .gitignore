@@ -145,3 +145,4 @@ temp/*
 venv/
 __pycache__/
 *.pyc
+.python-version
