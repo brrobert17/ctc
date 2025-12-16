@@ -92,8 +92,13 @@ export default function CarDetailPage() {
             {/* Car Specs */}
             <CarSpecsGrid car={car} />
             
-            {/* Price Explanation */}
-            <PriceExplanationCard />
+            {/* Price Explanation - Only show when estimated price exists */}
+            {car.estimated_price && car.price && (
+              <PriceExplanationCard 
+                listingPrice={car.price} 
+                estimatedPrice={car.estimated_price} 
+              />
+            )}
           </div>
 
           {/* Sidebar Content - Right Column */}

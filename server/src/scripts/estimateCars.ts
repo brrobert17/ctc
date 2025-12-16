@@ -459,6 +459,7 @@ async function estimateAllCars() {
     let totalPercentageOff = 0;
     let under5Percent = 0;
     let under10Percent = 0;
+    let under20Percent = 0;
     let under25Percent = 0;
     let under50Percent = 0;
     let over150Percent = 0;
@@ -491,14 +492,15 @@ async function estimateAllCars() {
       const result = await processCar(car);
       
       if (result) {
-        // Calculate accuracy
+        // Calculate accuracy using estimated price as denominator (matches frontend)
         const actualPrice = car.price || 0;
-        const difference = result.estimated_price - actualPrice;
-        const percentageOff = actualPrice > 0 ? ((difference / actualPrice) * 100) : 0;
+        const estimatedPrice = result.estimated_price;
+        const difference = actualPrice - estimatedPrice;
+        const percentageOff = estimatedPrice > 0 ? ((difference / estimatedPrice) * 100) : 0;
         const absPercentageOff = Math.abs(percentageOff);
         
-        // Only save to database if accuracy is within 10%
-        if (absPercentageOff <= 10) {
+        // Only save to database if accuracy is within 20%
+        if (absPercentageOff <= 20) {
           await prisma.car.update({
             where: { id: car.id },
             data: {
@@ -516,6 +518,9 @@ async function estimateAllCars() {
         }
         if (absPercentageOff <= 10) {
           under10Percent++;
+        }
+        if (absPercentageOff <= 20) {
+          under20Percent++;
         }
         if (absPercentageOff <= 25) {
           under25Percent++;
@@ -552,6 +557,7 @@ async function estimateAllCars() {
     console.log(`Average percentage off: ${averagePercentageOff}%`);
     console.log(`Cars within 5% accuracy: ${under5Percent} (${processed > 0 ? ((under5Percent / processed) * 100).toFixed(2) : 0}%)`);
     console.log(`Cars within 10% accuracy: ${under10Percent} (${processed > 0 ? ((under10Percent / processed) * 100).toFixed(2) : 0}%)`);
+    console.log(`Cars within 20% accuracy: ${under20Percent} (${processed > 0 ? ((under20Percent / processed) * 100).toFixed(2) : 0}%)`);
     console.log(`Cars within 25% accuracy: ${under25Percent} (${processed > 0 ? ((under25Percent / processed) * 100).toFixed(2) : 0}%)`);
     console.log(`Cars within 50% accuracy: ${under50Percent} (${processed > 0 ? ((under50Percent / processed) * 100).toFixed(2) : 0}%)`);
     console.log(`Cars over 150% off: ${over150Percent} (${processed > 0 ? ((over150Percent / processed) * 100).toFixed(2) : 0}%)`);

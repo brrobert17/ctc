@@ -2,24 +2,23 @@ import { useState, useEffect } from 'react'
 import { FiltersSidebar } from '../components/browse/FiltersSidebar'
 import { ListingCard, type ListingCardProps } from '../components/browse/ListingCard'
 import { useCars } from '../hooks/useCars'
+import { getPriceBadge } from '../utils/pricing'
 import type { Car } from '../types/car.types'
 
-/**
- * Transform API car data to ListingCard props
- */
+// Transform API car data to ListingCard props
 function transformCarToListing(car: Car): ListingCardProps {
   return {
     id: String(car.id),
     title: `${car.year || ''} ${car.make || ''} ${car.model || ''}`.trim() || 'Unknown Car',
     price: car.price || 0,
-    fairPrice: car.price || 0, // TODO: Add ML prediction for fair price
+    fairPrice: car.estimatedPrice || 0,
     image: car.image || 'https://via.placeholder.com/400x250?text=No+Image',
     mileage: car.mileage || 0,
     year: car.year || 0,
     location: car.location || 'Unknown',
     transmission: car.transmission || 'Unknown',
     fuel: car.fuelType || 'Unknown',
-    // badge: 'Fairly priced', // TODO: Calculate badge based on ML prediction - currently not shown
+    badge: getPriceBadge(car.price, car.estimatedPrice, 5),
     confidence: 'Medium', // TODO: Get confidence from ML model
     source: car.source || 'Unknown',
     sourceUrl: car.url || '#',
