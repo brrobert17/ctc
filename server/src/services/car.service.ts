@@ -79,6 +79,8 @@ export class CarService {
       select: {
         id: true,
         price: true,
+        estimated_price: true,
+        danish_market: true,
         mileage: true,
         model_year: true,
         url: true,
@@ -119,9 +121,10 @@ export class CarService {
           take: 1, // Only get the first image
         },
       },
-      orderBy: {
-        id: 'desc', // Most recent first
-      },
+      orderBy: [
+        { estimated_price: { sort: 'desc', nulls: 'last' } }, // Cars with estimated price first
+        { id: 'desc' }, // Then by most recent
+      ],
     });
 
     // Transform the data to a clean structure
@@ -132,6 +135,8 @@ export class CarService {
       year: car.model_year,
       location: car.car_locations?.car_location || null,
       price: car.price,
+      estimatedPrice: car.estimated_price,
+      danishMarket: car.danish_market,
       image: car.car_images[0]?.image_url || null,
       transmission: car.transmission_types?.transmission_type || null,
       fuelType: car.fuel_types?.fuel_type || null,
