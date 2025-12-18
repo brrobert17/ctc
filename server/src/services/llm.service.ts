@@ -22,6 +22,17 @@ if (process.env.OLLAMA_API_KEY) {
 
 const ollama = new Ollama(ollamaConfig);
 
+// ==================== MODEL CONFIGURATION ====================
+// Optimized for RTX 3070 (4GB VRAM) with tool support
+const MODEL_NAME = 'mistral';
+const USE_GPU = true;
+const NUM_CTX = 16384;
+const NUM_PREDICT = 2048;
+const NUM_GPU_LAYERS = USE_GPU ? 999 : 0;
+
+console.log(`[LLM] Using model: ${MODEL_NAME}, GPU: ${USE_GPU}, Context: ${NUM_CTX}`);
+// ============================================================
+
 const SYSTEM_PROMPT = `You are an expert used car trading advisor specializing in the Danish automotive market. Your role is to help users make informed decisions about buying and selling used vehicles in Denmark.
 
 Your expertise includes:
@@ -217,14 +228,14 @@ Return ONLY valid JSON, no other text.`;
 
     console.log('[LLM CONTEXT] Calling Ollama for analysis...');
     const analysis = await ollama.chat({
-      model: 'mistral', // Using same model for consistency
+      model: MODEL_NAME,
       messages: [{ role: 'user', content: analysisPrompt }],
       stream: false,
       options: {
         temperature: 0.1, // Low temperature for consistent extraction
         num_predict: 500,
-        num_ctx: 16384, // Larger context window
-        num_gpu: 999, // Use all available GPU layers
+        num_ctx: NUM_CTX,
+        num_gpu: NUM_GPU_LAYERS,
       }
     });
 
@@ -778,14 +789,14 @@ export async function* chatStream(
 
     // Stream the initial response from Ollama
     const stream = await ollama.chat({
-      model: 'mistral', // Changed from 'gpt-oss' - better tool support
+      model: MODEL_NAME,
       messages: messages,
       tools: tools,
       stream: true,
       options: {
-        num_predict: 4096, // Increased for longer responses
-        num_ctx: 32768, // 32K context window for rich context
-        num_gpu: 999, // Use all available GPU layers
+        num_predict: NUM_PREDICT,
+        num_ctx: NUM_CTX,
+        num_gpu: NUM_GPU_LAYERS,
         temperature: 0.3, // Lower temp for more focused, action-oriented behavior
         top_k: 40,
         top_p: 0.9,
@@ -937,14 +948,14 @@ export async function* chatStream(
 
       console.log('[LLM STREAM] getting final response after tools...');
       const finalStream = await ollama.chat({
-        model: 'mistral', // Using same model for consistency
+        model: MODEL_NAME,
         messages: messagesWithTools,
         stream: true,
         // Don't send tools again in final response
         options: {
-          num_predict: 4096, // Increased for detailed synthesis
-          num_ctx: 32768, // Match main chat context window
-          num_gpu: 999, // Use all available GPU layers
+          num_predict: NUM_PREDICT,
+          num_ctx: NUM_CTX,
+          num_gpu: NUM_GPU_LAYERS,
           temperature: 0.4, // Slightly higher than initial for natural synthesis
           top_k: 40,
           top_p: 0.9,
