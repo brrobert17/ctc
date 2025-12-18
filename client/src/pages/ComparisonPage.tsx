@@ -84,6 +84,39 @@ export default function ComparisonPage() {
     return car.car_images?.[0]?.image_url || 'https://via.placeholder.com/400x300?text=No+Image'
   }
 
+  const formatComparisonForAI = () => {
+    const formattedCars = comparisonCars.map((car, index) => {
+      const carTitle = getCarTitle(car)
+      return `
+**Car ${index + 1}: ${carTitle}**
+- Price: ${car.price ? `${car.price.toLocaleString()} DKK` : 'N/A'}
+- Year: ${car.model_year || 'N/A'}
+- Mileage: ${car.mileage ? `${car.mileage.toLocaleString()} km` : 'N/A'}
+- Fuel Type: ${car.fuel_types?.fuel_type || 'N/A'}
+- Transmission: ${car.transmission_types?.transmission_type || 'N/A'}
+- Body Type: ${car.body_types?.body_type || 'N/A'}
+- Power: ${car.power || 'N/A'}
+- Engine: ${car.engine_displacement || 'N/A'}
+- Drivetrain: ${car.drivetrains?.drivetrain || 'N/A'}
+- Doors: ${car.doors || 'N/A'} | Seats: ${car.seats || 'N/A'}
+- Color: ${car.colors?.color || car.color_description || 'N/A'}
+- Fuel Consumption: ${car.fuel_consumption || 'N/A'}
+- CO2 Emission: ${car.co2_emission || 'N/A'}
+- Owners: ${car.number_of_owners || 'N/A'}
+- Location: ${car.car_locations?.car_location || 'N/A'}
+      `.trim()
+    }).join('\n\n')
+
+    return `I'm comparing these ${comparisonCars.length} cars and would like your analysis on which one offers the best value and why:\n\n${formattedCars}\n\nPlease analyze these cars considering factors like value for money, reliability, running costs, and overall suitability. Which one would you recommend and why?`
+  }
+
+  const handleAskAI = () => {
+    const message = formatComparisonForAI()
+    window.dispatchEvent(new CustomEvent('open-ai-chat-with-message', {
+      detail: { message }
+    }))
+  }
+
   return (
     <div className="bg-slate-950 min-h-screen pb-12">
       <div className="container mx-auto px-4 py-8">
@@ -95,7 +128,19 @@ export default function ComparisonPage() {
               Comparing {comparisonCars.length} car{comparisonCars.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleAskAI}
+              className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-medium rounded-md transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 19 7-7 3 3-7 7-3-3z"/>
+                <path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                <path d="m2 2 7.586 7.586"/>
+                <circle cx="11" cy="11" r="2"/>
+              </svg>
+              Ask AI for Analysis
+            </button>
             <button
               onClick={() => navigate({ to: '/browse' })}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md transition-colors"
@@ -192,6 +237,22 @@ export default function ComparisonPage() {
           <p className="text-xs text-slate-400 text-center">
             💡 Tip: For better viewing experience, try rotating your device to landscape mode or use a larger screen.
           </p>
+        </div>
+
+        {/* AI Analysis Tip */}
+        <div className="mt-6 bg-sky-900/20 border border-sky-800/30 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
+              AI
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-1">Need help deciding?</h4>
+              <p className="text-xs text-slate-300 mb-3">
+                Click the "Ask AI for Analysis" button above to get personalized recommendations based on your comparison. 
+                The AI will analyze factors like value for money, reliability, running costs, and overall suitability.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
