@@ -17,17 +17,17 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
     'Underpriced': {
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-500',
-      message: `This car is listed for ${listingPrice.toLocaleString()} DKK, which is approximately ${absDifference.toLocaleString()} DKK (${percentDiff}%) below our estimated fair market value. This is likely a good deal.`
+      message: `This car is listed for ${listingPrice.toLocaleString()} DKK, which is approximately ${absDifference.toLocaleString()} DKK (${percentDiff}%) below our estimated fair market value.`
     },
     'Fairly priced': {
       color: 'text-sky-400',
       bgColor: 'bg-sky-500',
-      message: `This car is listed for ${listingPrice.toLocaleString()} DKK, which is within ${percentDiff}% of our estimated fair market value of ${estimatedPrice.toLocaleString()} DKK. This appears to be a fair price.`
+      message: `This car is listed for ${listingPrice.toLocaleString()} DKK, which is within ${percentDiff}% of our estimated fair market value of ${estimatedPrice.toLocaleString()} DKK.`
     },
     'Overpriced': {
       color: 'text-red-400',
       bgColor: 'bg-red-500',
-      message: `This car is listed for ${listingPrice.toLocaleString()} DKK, which is approximately ${absDifference.toLocaleString()} DKK (${percentDiff}%) above our estimated fair market value. You may want to negotiate.`
+      message: `This car is listed for ${listingPrice.toLocaleString()} DKK, which is approximately ${absDifference.toLocaleString()} DKK (${percentDiff}%) above our estimated fair market value.`
     }
   }
 
@@ -38,7 +38,7 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
       <h3 className="text-lg font-bold text-white mb-4">
         Price Analysis: <span className={config.color}>{badge || 'Fairly priced'}</span>
       </h3>
-      
+
       <p className="text-slate-400 mb-6">{config.message}</p>
 
       <div className="space-y-4">
@@ -46,7 +46,7 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
           <span className="text-slate-300 text-sm">Listing Price</span>
           <span className="text-white font-medium">{listingPrice.toLocaleString()} DKK</span>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <span className="text-slate-300 text-sm">AI Estimated Value</span>
           <span className="text-white font-medium">{estimatedPrice.toLocaleString()} DKK</span>
@@ -71,9 +71,9 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
               <div className="w-1/3 bg-sky-500/30"></div>
               <div className="w-1/3 bg-red-500/30 rounded-r-full"></div>
             </div>
-            <div 
+            <div
               className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white ${config.bgColor}`}
-              style={{ 
+              style={{
                 left: `${Math.min(Math.max(((difference / estimatedPrice) * 100 + 15) / 30 * 100, 2), 98)}%`,
                 transform: 'translate(-50%, -50%)'
               }}
@@ -83,11 +83,11 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
       </div>
 
       <div className="mt-6 pt-6 border-t border-slate-800 text-center relative">
-        <button 
+        <button
           onClick={() => setShowInfoPopup(!showInfoPopup)}
           className="text-sky-400 text-sm hover:text-sky-300 font-medium underline underline-offset-4 decoration-sky-400/30 hover:decoration-sky-300"
         >
-          Learn more about how our pricing works
+          Learn more about how our price estimation works
         </button>
 
         {showInfoPopup && (
@@ -95,9 +95,9 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
             <div className="flex items-start gap-3">
               <div className="p-1.5 rounded-full bg-amber-500/10 text-amber-500 shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
               </div>
               <div className="text-left">
@@ -110,13 +110,13 @@ export function PriceExplanationCard({ listingPrice, estimatedPrice }: PriceExpl
                 </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setShowInfoPopup(false)}
               className="absolute top-2 right-2 text-slate-500 hover:text-slate-300"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">

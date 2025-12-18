@@ -48,10 +48,10 @@ function EstimationForm() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
-    
+
     if (urlParams.has('year')) {
       const prefilledData: Partial<EstimationUserInput> = {}
-      
+
       const year = urlParams.get('year')
       const mileage = urlParams.get('mileage')
       const mpg_avg = urlParams.get('mpg_avg')
@@ -105,12 +105,12 @@ function EstimationForm() {
         },
         body: JSON.stringify(data),
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         throw new Error(errorData.message || 'Estimation failed')
       }
-      
+
       return response.json() as Promise<{ data: EstimationResult }>
     }
   })
@@ -118,18 +118,18 @@ function EstimationForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
-    
+
     const numericFields = ['engine_size_l', 'mpg_avg']
-    
+
     setFormData(prev => {
       let processedValue: any = value
-      
+
       if (type === 'checkbox') {
         processedValue = checked ? 1 : 0
       } else if (type === 'number' || numericFields.includes(name)) {
         processedValue = Number(value)
       }
-      
+
       const newData = {
         ...prev,
         [name]: processedValue
@@ -138,9 +138,9 @@ function EstimationForm() {
       if (name === 'manufacturer') {
         const availableModels = manufacturerToModels[value as string] || []
         const currentModel = prev.model
-        
+
         if (value && currentModel && !availableModels.includes(currentModel)) {
-           newData.model = ''
+          newData.model = ''
         }
       }
 
@@ -160,22 +160,22 @@ function EstimationForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     setManufacturerError('')
     setModelError('')
     setYearError('')
-    
+
     let hasErrors = false
     if (!formData.manufacturer) {
       setManufacturerError('Please select a manufacturer from the dropdown list.')
       hasErrors = true
     }
-    
+
     if (!formData.model) {
       setModelError('Please select a model from the dropdown list.')
       hasErrors = true
     }
-    
+
     if (formData.year < 1980 || formData.year > 2026) {
       setYearError('Please enter a valid year between 1980 and 2026.')
       hasErrors = true
@@ -183,7 +183,7 @@ function EstimationForm() {
     if (hasErrors) {
       return
     }
-    
+
     setCurrentEstimationSaved(false)
     mutation.mutate(formData)
   }
@@ -203,7 +203,7 @@ function EstimationForm() {
     const value = e.target.value
     setModelSearchTerm(value)
     setShowModelDropdown(value.length > 0)
-    
+
     setModelError('')
     setFormData(prev => ({ ...prev, model: '' }))
   }
@@ -218,10 +218,10 @@ function EstimationForm() {
     const value = e.target.value
     setManufacturerSearchTerm(value)
     setShowManufacturerDropdown(value.length > 0)
-    
+
     setManufacturerError('')
     setModelError('')
-    
+
     setFormData(prev => ({ ...prev, manufacturer: '', model: '' }))
     setModelSearchTerm('')
   }
@@ -236,7 +236,7 @@ function EstimationForm() {
   const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     const year = parseInt(value)
-    
+
     setYearError('')
     setFormData(prev => ({ ...prev, year: year || 0 }))
     if (value && (!isNaN(year))) {
@@ -253,11 +253,11 @@ function EstimationForm() {
     ? manufacturerToModels[formData.manufacturer]
     : modelInputDb.model.sort()
 
-  const filteredModels = availableModels.filter(model => 
+  const filteredModels = availableModels.filter(model =>
     formatModel(model).toLowerCase().includes(modelSearchTerm.toLowerCase()) ||
     model.toLowerCase().includes(modelSearchTerm.toLowerCase())
   )
-  const filteredManufacturers = modelInputDb.manufacturer.filter(manufacturer => 
+  const filteredManufacturers = modelInputDb.manufacturer.filter(manufacturer =>
     capitalizeManufacturer(manufacturer).toLowerCase().startsWith(manufacturerSearchTerm.toLowerCase()) ||
     manufacturer.toLowerCase().startsWith(manufacturerSearchTerm.toLowerCase())
   )
@@ -280,11 +280,10 @@ function EstimationForm() {
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, danish_market: 1 }))}
-                    className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${
-                      formData.danish_market === 1 
-                        ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50' 
+                    className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${formData.danish_market === 1
+                        ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <img
                       src="https://flagcdn.com/w20/dk.png"
@@ -295,16 +294,15 @@ function EstimationForm() {
                     />
                     <span className="text-base">Danish Market</span>
                   </button>
-                  
+
                   {/* US Market Button */}
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, danish_market: 0 }))}
-                    className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${
-                      formData.danish_market === 0 
-                        ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50' 
+                    className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${formData.danish_market === 0
+                        ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <img
                       src="https://flagcdn.com/w20/us.png"
@@ -332,13 +330,12 @@ function EstimationForm() {
                       min="1980"
                       max="2026"
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                        yearError 
-                          ? 'border-red-500 focus:ring-red-500' 
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${yearError
+                          ? 'border-red-500 focus:ring-red-500'
                           : formData.year >= 1980 && formData.year <= 2026
-                          ? 'border-emerald-500 focus:ring-emerald-500'
-                          : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                            ? 'border-emerald-500 focus:ring-emerald-500'
+                            : 'border-slate-800 focus:ring-sky-500'
+                        }`}
                     />
                     {/* Validation*/}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -357,7 +354,7 @@ function EstimationForm() {
                     <p className="text-red-400 text-sm mt-1">{yearError}</p>
                   )}
                 </div>
-                
+
                 {/* Mileage Input */}
                 <div>
                   <label className="block text-sm font-medium text-slate-400 mb-1">
@@ -372,11 +369,10 @@ function EstimationForm() {
                       placeholder={formData.danish_market === 1 ? 'e.g. 50000' : 'e.g. 30000'}
                       required
                       min="0"
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                        formData.mileage > 0
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${formData.mileage > 0
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     />
                     {/* Validation */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -388,7 +384,7 @@ function EstimationForm() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Manufacturer Input */}
                 <div className="relative">
                   <label className="block text-sm font-medium text-slate-400 mb-1">Manufacturer</label>
@@ -402,13 +398,12 @@ function EstimationForm() {
                       onBlur={() => setTimeout(() => setShowManufacturerDropdown(false), 200)}
                       placeholder="Type to search manufacturers..."
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        manufacturerError
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${manufacturerError
                           ? 'border-red-500 focus:ring-red-500'
-                          : formData.manufacturer 
-                          ? 'border-emerald-500 focus:ring-emerald-500' 
-                          : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                          : formData.manufacturer
+                            ? 'border-emerald-500 focus:ring-emerald-500'
+                            : 'border-slate-800 focus:ring-sky-500'
+                        }`}
                     />
                     {/* Validation*/}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -427,7 +422,7 @@ function EstimationForm() {
                       ) : null}
                     </div>
                   </div>
-                  
+
                   {/* Dropdown with filtered results */}
                   {showManufacturerDropdown && filteredManufacturers.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-slate-900 border border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -466,13 +461,12 @@ function EstimationForm() {
                       onBlur={() => setTimeout(() => setShowModelDropdown(false), 200)}
                       placeholder="Type to search models..."
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        modelError
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${modelError
                           ? 'border-red-500 focus:ring-red-500'
-                          : formData.model 
-                          ? 'border-emerald-500 focus:ring-emerald-500' 
-                          : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                          : formData.model
+                            ? 'border-emerald-500 focus:ring-emerald-500'
+                            : 'border-slate-800 focus:ring-sky-500'
+                        }`}
                     />
                     {/* Validation */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -491,7 +485,7 @@ function EstimationForm() {
                       ) : null}
                     </div>
                   </div>
-                  
+
                   {/* Dropdown with filtered results */}
                   {showModelDropdown && filteredModels.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-slate-900 border border-slate-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -526,11 +520,10 @@ function EstimationForm() {
                       value={formData.engine_size_l || ''}
                       onChange={handleChange}
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        formData.engine_size_l > 0
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${formData.engine_size_l > 0
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     >
                       <option value="">Select Engine Size</option>
                       {modelInputDb.engine_size_l.sort().map(f => (
@@ -557,11 +550,10 @@ function EstimationForm() {
                       value={formData.fuel_type}
                       onChange={handleChange}
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        formData.fuel_type
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${formData.fuel_type
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     >
                       <option value="">Select Fuel Type</option>
                       {modelInputDb.fuel_type.sort().map(f => (
@@ -588,11 +580,10 @@ function EstimationForm() {
                       value={formData.drivetrain}
                       onChange={handleChange}
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        formData.drivetrain
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${formData.drivetrain
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     >
                       <option value="">Select Drivetrain</option>
                       {modelInputDb.drivetrain.sort().map(d => (
@@ -619,11 +610,10 @@ function EstimationForm() {
                       value={formData.transmission}
                       onChange={handleChange}
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        formData.transmission
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${formData.transmission
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     >
                       <option value="">Select Transmission</option>
                       {modelInputDb.transmission.sort().map(t => (
@@ -650,11 +640,10 @@ function EstimationForm() {
                       value={formData.exterior_color}
                       onChange={handleChange}
                       required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${
-                        formData.exterior_color
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 ${formData.exterior_color
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     >
                       <option value="">Select Color</option>
                       {modelInputDb.exterior_color.sort().map(c => (
@@ -684,11 +673,10 @@ function EstimationForm() {
                       placeholder="e.g. 250"
                       required
                       min="0"
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                        formData.hp > 0
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${formData.hp > 0
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     />
                     {/* Validation */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -716,11 +704,10 @@ function EstimationForm() {
                       min="0"
                       step="0.1"
                       placeholder={formData.danish_market === 1 ? "e.g. 12.5" : "e.g. 28.5"}
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                        formData.mpg_avg > 0
+                      className={`w-full bg-slate-950 border rounded px-3 py-2 pr-10 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${formData.mpg_avg > 0
                           ? 'border-emerald-500 focus:ring-emerald-500'
                           : 'border-slate-800 focus:ring-sky-500'
-                      }`}
+                        }`}
                     />
                     {/* Validation */}
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -737,7 +724,7 @@ function EstimationForm() {
               <div className="space-y-3 pt-2 border-t border-slate-800">
                 <p className="text-sm font-medium text-slate-400">Vehicle History & Condition</p>
                 <div className="flex flex-col gap-3">
-                   <label className="flex items-center space-x-3 cursor-pointer">
+                  <label className="flex items-center space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
                       name="accidents_or_damage"
@@ -780,7 +767,7 @@ function EstimationForm() {
                 {mutation.isPending ? 'Calculating...' : 'Get Estimate'}
               </button>
             </form>
-            
+
             {/* AI Model Information */}
             <div className="mt-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
               <div className="flex items-start space-x-3">
@@ -790,8 +777,11 @@ function EstimationForm() {
                 <div className="text-sm text-slate-300">
                   <p className="font-medium text-slate-200 mb-1">About Our AI Estimations</p>
                   <p className="mb-2">
-                    Estimations are generated by an AI model trained on historical car sale data from the USA (2023). 
+                    Estimations are generated by an AI model trained on historical car sale data from the USA (2023).
                     For the most accurate results, we recommend using the <strong>US Market</strong> option.
+                  </p>
+                  <p className="text-xs text-amber-400 mb-2 leading-relaxed font-medium">
+                    Note: Danish market pricing is still in development. These estimations are for guidance only and may not reflect actual Danish market values.
                   </p>
                   <p className="text-slate-400">
                     💡 <strong>Tip:</strong> If you can't find your exact option in the dropdown menus, select the closest available option or "Other" for better accuracy.
@@ -804,12 +794,12 @@ function EstimationForm() {
           {/* Result Section */}
           <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 h-fit">
             <h2 className="text-lg font-semibold text-slate-100 mb-4">Estimated Price</h2>
-            
+
             {mutation.data ? (
               <div className="text-center py-8">
                 <p className="text-sm text-slate-400 mb-2">Based on market data</p>
                 <div className="text-4xl font-extrabold text-emerald-400">
-                  {formData.danish_market === 1 
+                  {formData.danish_market === 1
                     ? `${mutation.data.data.predicted_price.toLocaleString('da-DK')} DKK`
                     : `$${mutation.data.data.predicted_price.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
                   }
@@ -818,16 +808,15 @@ function EstimationForm() {
                   <p><strong>Confidence:</strong> High</p>
                   <p><strong>Model:</strong> LightGBM Regressor</p>
                 </div>
-                
+
                 {/* Save Estimation Button */}
                 <button
                   onClick={handleSaveEstimation}
                   disabled={currentEstimationSaved}
-                  className={`mt-4 w-full font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                    currentEstimationSaved 
-                      ? 'bg-slate-600 text-slate-300 cursor-not-allowed' 
+                  className={`mt-4 w-full font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 ${currentEstimationSaved
+                      ? 'bg-slate-600 text-slate-300 cursor-not-allowed'
                       : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                  }`}
+                    }`}
                 >
                   {currentEstimationSaved ? (
                     <>
@@ -849,20 +838,20 @@ function EstimationForm() {
             ) : (
               <div className="text-center py-12 text-slate-500">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 opacity-50">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
                 <p>Fill out the form to see the price estimation</p>
               </div>
             )}
-            
+
             {mutation.isError && (
-               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">
-                 <p className="font-bold">Error</p>
-                 <p>{mutation.error.message}</p>
-                 <p className="text-xs mt-2 opacity-75">Ensure backend and ML service are running.</p>
-               </div>
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">
+                <p className="font-bold">Error</p>
+                <p>{mutation.error.message}</p>
+                <p className="text-xs mt-2 opacity-75">Ensure backend and ML service are running.</p>
+              </div>
             )}
           </div>
         </div>
@@ -886,7 +875,7 @@ export default function EstimationPage() {
   // Show login prompt if not authenticated
   if (!isLoggedIn) {
     return (
-      <LoginPrompt 
+      <LoginPrompt
         title="Login Required"
         message="You need to login to access the Price Estimation feature."
       />
