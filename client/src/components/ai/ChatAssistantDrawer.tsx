@@ -47,9 +47,21 @@ export function ChatAssistantDrawer() {
   const currentMessageRef = useRef<string>('')
   const resizeStartX = useRef(0)
   const resizeStartWidth = useRef(0)
+  const pendingMessageRef = useRef<string | null>(null)
 
   useEffect(() => {
     const handleToggle = () => setIsOpen(prev => !prev)
+    
+    const handleToggleWithMessage = (event: Event) => {
+      const customEvent = event as CustomEvent
+      setIsOpen(true)
+      
+      // If there's an initial message in the event, store it for processing
+      if (customEvent.detail?.message) {
+        pendingMessageRef.current = customEvent.detail.message
+      }
+    }
+    
     const handleResize = () => {
       // Auto-adjust width on mobile
       if (window.innerWidth < 768) {
@@ -58,10 +70,12 @@ export function ChatAssistantDrawer() {
     }
     
     window.addEventListener('toggle-ai-chat', handleToggle)
+    window.addEventListener('open-ai-chat-with-message', handleToggleWithMessage)
     window.addEventListener('resize', handleResize)
     
     return () => {
       window.removeEventListener('toggle-ai-chat', handleToggle)
+      window.removeEventListener('open-ai-chat-with-message', handleToggleWithMessage)
       window.removeEventListener('resize', handleResize)
       // Clean up EventSource on unmount
       if (eventSourceRef.current) {
@@ -73,6 +87,19 @@ export function ChatAssistantDrawer() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinkingState])
+
+  // Handle pending message when drawer opens
+  useEffect(() => {
+    if (isOpen && pendingMessageRef.current && !isStreaming) {
+      const messageToSend = pendingMessageRef.current
+      pendingMessageRef.current = null
+      
+      // Small delay to ensure the drawer is fully rendered
+      setTimeout(() => {
+        sendMessage(messageToSend)
+      }, 100)
+    }
+  }, [isOpen, isStreaming])
 
   // Handle resizing
   useEffect(() => {
