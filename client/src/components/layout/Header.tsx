@@ -1,11 +1,13 @@
 import { Link } from '@tanstack/react-router'
 import { useAuth } from '../../contexts/AuthContext'
+import { useComparison } from '../../contexts/ComparisonContext'
 import favicon from '../../assets/favicon.svg'
 import ProfileIcon from '../ui/ProfileIcon'
 import { useState } from 'react'
 
 export function Header() {
   const { user, isLoggedIn, logout } = useAuth()
+  const { comparisonCars } = useComparison()
   const [showUserMenu, setShowUserMenu] = useState(false)
 
   return (
@@ -29,6 +31,17 @@ export function Header() {
               className="text-sm font-medium text-slate-300 hover:text-white transition-colors [&.active]:text-white"
             >
               Browse cars
+            </Link>
+            <Link 
+              to="/compare" 
+              className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors [&.active]:text-white"
+            >
+              Compare
+              {comparisonCars.length > 0 && (
+                <span className="absolute -top-2 -right-3 bg-sky-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {comparisonCars.length}
+                </span>
+              )}
             </Link>
           </nav>
         </div>

@@ -202,25 +202,65 @@ curl.exe -X GET "http://localhost:3000/api/test/protected" `
 ### Setup
 
 1. **Install Ollama** from https://ollama.com
-2. **Pull Mistral 7B:**
+2. **Pull the Mistral model:**
+   
+   **For ALL hardware (automatically optimizes):**
    ```bash
    ollama pull mistral
    ```
-3. **Optional - Get Ollama API Key** for enhanced web search from https://ollama.com/settings/keys
-4. **Add to `.env` file (optional):**
+   
+   Ollama will automatically use the best quantization for your GPU.
+
+3. **Configure for 4GB VRAM** in `server/src/services/llm.service.ts` (already set):
+   ```typescript
+   const MODEL_NAME = 'mistral';  // Uses automatic quantization
+   const USE_GPU = true;          // Set to false for CPU-only
+   ```
+   
+   Context is already reduced to 16K tokens for 4GB VRAM compatibility.
+
+4. **Optional - Get Ollama API Key** for enhanced web search from https://ollama.com/settings/keys
+5. **Add to `.env` file (optional):**
    ```env
    OLLAMA_API_KEY=your-ollama-api-key-here
    ```
+
+### Model Recommendations
+
+**⚠️ CRITICAL:** Only certain base model tags support Ollama tool calling!
+
+**MODELS WITH TOOL SUPPORT:**
+- ✅ `mistral` - 7B params, good quality, **works on 4GB VRAM**
+- ✅ `phi4-mini` - 14B params, excellent quality, **requires 8GB+ VRAM**
+
+**DO NOT USE:**
+- ❌ Specific quantization tags (`q3_K_S`, `q2_K`, etc.) - No tool support
+- ❌ `phi3` (older version) - No tool support
+- ❌ Other models (`gemma`, `llama`) - No tool support
+
+| Hardware | Recommended Model | VRAM Usage | Speed | Quality | Tool Support |
+|----------|------------------|------------|-------|---------|--------------|
+| **RTX 3070 (4GB)** | `mistral` | ~4-5GB | ⚡⚡ Medium | ⭐⭐⭐⭐ Great | ✅ Yes |
+| **RTX 4070+ (8GB)** | `phi4-mini` | ~8GB | ⚡⚡ Medium | ⭐⭐⭐⭐⭐ Excellent | ✅ Yes |
+| **CPU (any)** | `mistral` + `USE_GPU=false` | 0GB | ⚡ Slow (10-15s) | ⭐⭐⭐⭐ Great | ✅ Yes |
+
+**For 4GB VRAM:** Stay with `mistral` (default). Context is reduced to 16K tokens to prevent OOM.
+
+**For 8GB+ VRAM:** Try `phi4-mini` for better quality:
+```bash
+ollama pull phi4-mini
+```
+Then change in code: `const MODEL_NAME = 'phi4-mini';`
 
 ### Features
 
 - **Danish Market Specialist** - Trained prompts for Danish automotive market, regulations, and pricing
 - **Context Gathering** - Pre-fetches relevant web and database information before responding
-- **Mistral 7B Model** - 32K context window, 4K token generation for comprehensive responses
+- **Flexible Model Support** - Optimized configurations for different hardware constraints
 - **Web Search Integration** - Ollama native search (with API key) or DuckDuckGo fallback
 - **PostgreSQL Database** - Real-time queries against Danish car listings
 - **Market Analytics** - Automated statistics and pricing trends
-- **GPU Optimized** - Configured for maximum VRAM utilization and performance
+- **GPU/CPU Adaptive** - Automatically configures for available hardware
 - **SSE Streaming** - Real-time response streaming to client
 
 ### Available Tools
