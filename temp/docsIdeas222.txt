@@ -1,0 +1,19 @@
+GOAL:
+1. Esatblish an integrated locally run LLM in our express server that will be a custom agent to research and advise on used car trading
+2. Tweak it with some directions, tone and general focus on the subject. 
+3. Enable it to connect to the internet and do research on specific car models' intricacies, maintenance and owners' feedback. 
+4. Enable it to connect to a dataset I have to gather information from there. 
+5. Enable it to find reference sales from the local database.
+
+Setup:
+1. I have ollama running locally with the gpt-oss model
+2. I have a used-cars sales dataset in .\temp\cars.csv
+3. .\server contains a basic express instance written in typescript
+
+Tasks:
+1. create a router dedicated to be the bridge to the llm instance
+2. create an endpoint (unprotected) to test connection to the llm
+3. we need to make the csv dataset easily and quickly accessible to the LLM
+4. create an endpoint (unprotected) to receive a prompt and forward it to the llm 
+    4.1 Utilising the web seach and datbase search tools
+    4.2 Include the agent configurations to set tone, focus

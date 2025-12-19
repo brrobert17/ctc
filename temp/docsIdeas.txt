@@ -1,0 +1,14 @@
+switch model, optimise model for local pc, utilise tools
+
+data-cleaning migration, 
+
+model run config:
+    gpt-oss - vulcan GPU
+    mistral - better tool usage
+    optimise for gaming laptop - demo environment
+    keep tool utilisation ability
+
+
+Future ref:
+ make llm context aware - quote, access user data, make hyperlinks within the page
+ 

@@ -1,0 +1,9 @@
+I need a setup of express server with typescript.
+We'll need .env as well.
+Include the basic middlewares, router configuration in the router folder.
+Create a test endpoint to respond with a Hello World success message.
+Create a register and login endpoint and an authentication middleware with simple passwrod hashing and jwt auth - no refresh token just access with 4h expiration.
+Also create a protected endpoint to test the authentication, simple token in the header.
+For database lets set up a simple jsonserver for now.
+I also want a README file on how to run the server.
+And I want prettier formatter in there as well.
