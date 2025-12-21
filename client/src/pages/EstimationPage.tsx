@@ -805,7 +805,6 @@ function EstimationForm() {
                   }
                 </div>
                 <div className="mt-4 p-3 bg-slate-800 rounded text-xs text-slate-400 text-left">
-                  <p><strong>Confidence:</strong> High</p>
                   <p><strong>Model:</strong> LightGBM Regressor</p>
                 </div>
 

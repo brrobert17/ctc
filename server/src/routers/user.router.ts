@@ -129,10 +129,15 @@ router.get('/estimations', authMiddleware, async (req: AuthRequest, res: Respons
 router.delete('/estimations/:id', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
-    const estimationId = req.params.id;
+    const estimationId = parseInt(req.params.id, 10);
 
     if (!userId) {
       res.status(401).json({ success: false, message: 'User not authenticated' });
+      return;
+    }
+
+    if (isNaN(estimationId)) {
+      res.status(400).json({ success: false, message: 'Invalid estimation ID' });
       return;
     }
 

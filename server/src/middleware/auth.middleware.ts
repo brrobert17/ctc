@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/auth';
 
 export interface AuthRequest extends Request {
-  userId?: string;
+  userId?: number;
 }
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
