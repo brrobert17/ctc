@@ -1,8 +1,9 @@
-# Improved Bachelor Thesis Documentation Plan
-## LLM Integration in Web Applications: A Car Trading Companion Case Study
+# LLM Integration Documentation - Improved Plan
+## Implementing a Local AI Assistant: Technical Journey & Lessons Learned
 
 **Target:** 15+ pages (36,000+ characters)
-**Current Draft Analysis:** Your plan covers the journey well but needs more depth, theory, and academic grounding.
+**Purpose:** Document the complete implementation journey of integrating a local LLM into a web application
+**Style:** Technical documentation with theoretical context where relevant
 
 ---
 
@@ -14,10 +15,10 @@
 - Industry adoption statistics (Gartner, McKinsey reports)
 - User expectations shaped by ChatGPT, Claude, Gemini
 
-**Academic Sources:**
-- Brown et al. (2020). "Language Models are Few-Shot Learners" - GPT-3 paper establishing modern LLM capabilities
-- Vaswani et al. (2017). "Attention is All You Need" - Transformer architecture foundation
-- Wei et al. (2022). "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"
+**Reference Sources:**
+- OpenAI (2023). "GPT-4 Technical Report" - Modern LLM capabilities overview
+- "The Illustrated Transformer" by Jay Alammar (blog) - Visual explanation of attention mechanisms
+- Anthropic's Claude documentation - Prompt engineering best practices
 
 ### 1.2 Problem Definition
 **Add detail on:**
@@ -26,9 +27,9 @@
 - Role of AI in reducing buyer uncertainty
 - Danish market specifics (regulations, taxes, registration requirements)
 
-**Research needed:**
-- Used car market size in Denmark (Statistics Denmark - Danmarks Statistik)
-- Consumer pain points in car purchasing (survey data if available)
+**Context needed:**
+- Danish used car market overview (Statistics Denmark website)
+- Industry reports on AI adoption in automotive sector (McKinsey, Gartner)
 
 ### 1.3 Use Case Justification
 **Strengthen with:**
@@ -46,9 +47,10 @@
 - Pre-training vs fine-tuning paradigms
 - Parameter scaling and emergent abilities (Kaplan et al., 2020 - Scaling Laws)
 
-**Academic Sources:**
-- Bommasani et al. (2021). "On the Opportunities and Risks of Foundation Models" - Stanford HAI report
-- Zhao et al. (2023). "A Survey of Large Language Models" - Comprehensive LLM overview
+**Reference Sources:**
+- Simon Willison's blog - "Prompt injection explained" (practical LLM security)
+- Hugging Face Transformers documentation - Model architecture overview
+- "A Survey of LLMs" (arXiv 2023) - If needed for broader context
 
 ### 2.2 Local LLM Deployment
 **Compare approaches:**
@@ -62,8 +64,9 @@
 - VRAM optimization for consumer hardware
 
 **Sources:**
-- Frantar et al. (2023). "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers"
-- Dettmers et al. (2023). "QLoRA: Efficient Finetuning of Quantized LLMs"
+- llama.cpp GitHub documentation - Quantization guide
+- Ollama documentation - Model quantization formats explained
+- "Running LLMs Locally" by Matt Williams (practical guide)
 
 ### 2.3 Model Selection Criteria
 **Document your decision process:**
@@ -83,8 +86,9 @@
 - Your implementation: Ollama tool specification format
 
 **Research:**
-- Effectiveness of tool-augmented LLMs (Qin et al., 2023 - "Tool Learning with Foundation Models")
-- Hallucination reduction through grounding (Ji et al., 2023 - Survey on Hallucination)
+- Ollama tool calling documentation (GitHub)
+- OpenAI function calling guide (official docs)
+- "Why LLMs Hallucinate and How to Fix It" (Towards Data Science article)
 
 ### 2.5 Prompt Engineering (4Ts Framework)
 **Expand your 4Ts:**
@@ -93,9 +97,10 @@
 - **Tone:** Professional, honest, data-driven
 - **Task:** Research, advise, identify deals/red flags
 
-**Academic backing:**
-- Liu et al. (2023). "Pre-train, Prompt, and Predict: A Systematic Survey of Prompting Methods"
-- Reynolds & McDonell (2021). "Prompt Programming for Large Language Models"
+**Reference materials:**
+- "Prompt Engineering Guide" by DAIR.AI (comprehensive practical guide)
+- Anthropic's prompt engineering documentation
+- LearnPrompting.org - Community-driven prompt patterns
 
 ### 2.6 Context Management
 **Detail your system prompt design:**
@@ -145,9 +150,10 @@ PostgreSQL Database (Cars)
 - Event format: `data: {JSON}\n\n`
 - 9 event types: `thinking`, `connected`, `content`, `tool_call`, `tool_executing`, `tool_result`, `generating`, `done`, `error`
 
-**Academic source:**
-- Fielding's dissertation on REST (2000) - includes discussion of streaming
-- HTTP/1.1 specification (RFC 2616) - persistent connections
+**Reference sources:**
+- MDN Web Docs - Server-Sent Events API
+- "Real-time Streaming with SSE" (blog post by various developers)
+- Express.js streaming response patterns (Stack Overflow, GitHub discussions)
 
 ### 3.3 Tool Integration Architecture
 **Your 3 tools documented:**
@@ -223,9 +229,10 @@ async function* chatStream(message, history): AsyncGenerator<Event>
 
 **GPU Driver optimization:** ROCm for AMD, CUDA for NVIDIA
 
-**Research context:**
-- Inference optimization literature (Pope et al., 2022 - "Efficiently Scaling Transformer Inference")
-- Quantization trade-offs (Dettmers et al., 2022 - "LLM.int8()")
+**Reference context:**
+- Ollama performance tuning guide (official docs)
+- AMD ROCm and NVIDIA CUDA optimization guides
+- "Optimizing LLM Inference" (Hugging Face blog)
 
 ### 4.3 Response Quality vs Speed Trade-offs
 **Parameters tuned:**
@@ -359,9 +366,10 @@ PostgreSQL (RDS)
 - **Memory/Personalization:** User preference learning, past conversation context
 - **Multimodal:** Image analysis for car condition assessment (LLaVA, GPT-4V)
 
-**Academic sources:**
-- Lewis et al. (2020). "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
-- Park et al. (2023). "Generative Agents: Interactive Simulacra of Human Behavior"
+**Reference sources:**
+- LangChain documentation - RAG implementation patterns
+- Pinecone vector database guides - Practical RAG tutorials
+- "Building AI Agents" by various tech blogs (Medium, dev.to)
 
 ---
 
@@ -396,26 +404,26 @@ PostgreSQL (RDS)
 
 ---
 
-## SECTION 8: Conclusion & Reflection (1 page)
+## SECTION 8: Key Takeaways & Lessons Learned (1 page)
 
-### 8.1 Achievements
-- Successfully integrated local LLM with real-time streaming
-- Tool calling prevents hallucinated car data
-- Optimized for consumer hardware (demo-ready)
-- User experience matches commercial AI assistants
+### 8.1 What Worked
+- Local LLM integration with real-time streaming is production-viable
+- Tool calling effectively prevents hallucinated data
+- Consumer hardware (4-12GB VRAM) sufficient for prototypes
+- SSE provides excellent streaming UX
 
-### 8.2 Lessons Learned
-- Model selection critical: Not all models support tools
-- Quantization must preserve tool calling capability
-- Immediate user feedback essential (perceived performance)
-- System prompts powerful for behavior control
-- Local deployment viable for prototypes, cloud better for scale
+### 8.2 Critical Discoveries
+- **Model selection:** Only base model tags support Ollama tools (not quantization tags)
+- **Immediate feedback:** Users need instant response ("Connecting..." shown at 0ms)
+- **User-friendly status:** Hide technical tool names from users
+- **Hardware optimization:** Context window trade-offs critical for VRAM constraints
+- **Hybrid strategies:** Fallback mechanisms (DuckDuckGo) ensure reliability
 
-### 8.3 Academic Contribution
-- Practical case study of LLM integration in domain-specific application
-- Performance documentation across hardware configurations
-- Tool usage patterns for grounding LLM responses
-- Cost-benefit analysis: local vs cloud deployment
+### 8.3 Practical Value
+- Documented approach others can replicate for domain-specific AI assistants
+- Performance benchmarks across hardware configurations
+- Real-world tool usage patterns and anti-hallucination techniques
+- Cost-benefit analysis for local vs cloud deployment decisions
 
 ---
 
@@ -437,39 +445,34 @@ PostgreSQL (RDS)
 
 ---
 
-## BIBLIOGRAPHY (Academic Sources to Include)
+## REFERENCES & RESOURCES
 
-### Foundational AI/LLM Papers:
-1. Vaswani et al. (2017). Attention is All You Need. NeurIPS.
-2. Brown et al. (2020). Language Models are Few-Shot Learners. NeurIPS.
-3. Bommasani et al. (2021). On the Opportunities and Risks of Foundation Models. Stanford HAI.
-4. Zhao et al. (2023). A Survey of Large Language Models. arXiv.
+### Core Technical Documentation:
+1. **Ollama Documentation** (2024). Tool Calling API Reference & Model Library. https://github.com/ollama/ollama
+2. **MDN Web Docs** - Server-Sent Events API and Fetch Streaming. https://developer.mozilla.org
+3. **Mistral AI Documentation** - Model capabilities and inference guides. https://docs.mistral.ai
+4. **Express.js Documentation** - Streaming responses and middleware patterns.
 
-### Tool Use / Agents:
-5. Yao et al. (2022). ReAct: Synergizing Reasoning and Acting in Language Models. ICLR.
-6. Schick et al. (2023). Toolformer: Language Models Can Teach Themselves to Use Tools. NeurIPS.
-7. Qin et al. (2023). Tool Learning with Foundation Models. arXiv.
+### Practical Guides & Blog Posts:
+5. **Jay Alammar** - "The Illustrated Transformer" (visual explanation). https://jalammar.github.io
+6. **Simon Willison's Blog** - LLM practical implementations and security. https://simonwillison.net
+7. **DAIR.AI** - "Prompt Engineering Guide" (comprehensive). https://www.promptingguide.ai
+8. **Hugging Face Blog** - "Making LLMs Lighter and Faster" (quantization guide).
 
-### Prompt Engineering:
-8. Liu et al. (2023). Pre-train, Prompt, and Predict: A Systematic Survey of Prompting Methods. ACM Computing Surveys.
-9. Wei et al. (2022). Chain-of-Thought Prompting Elicits Reasoning in Large Language Models. NeurIPS.
+### Key Academic Papers (if deeper theory needed):
+9. **Vaswani et al. (2017)** - "Attention is All You Need" (Transformer foundation). NeurIPS.
+10. **Yao et al. (2022)** - "ReAct: Reasoning and Acting in LLMs" (tool use framework). ICLR.
+11. **OpenAI (2023)** - "GPT-4 Technical Report" (modern LLM capabilities).
 
-### Optimization & Efficiency:
-10. Dettmers et al. (2022). LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale. NeurIPS.
-11. Frantar et al. (2023). GPTQ: Accurate Post-Training Quantization for GPT. ICLR.
-12. Pope et al. (2022). Efficiently Scaling Transformer Inference. MLSys.
+### Industry Resources:
+12. **Statistics Denmark** - Vehicle market data (2023-2024). https://www.dst.dk
+13. **Gartner/McKinsey** - AI adoption reports in automotive sector.
+14. **LangChain Documentation** - RAG patterns and agent frameworks (for future work).
 
-### RAG & Knowledge Grounding:
-13. Lewis et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. NeurIPS.
-14. Ji et al. (2023). Survey of Hallucination in Natural Language Generation. ACM Computing Surveys.
-
-### Market/Domain:
-15. Akerlof, G. (1970). The Market for Lemons: Quality Uncertainty and the Market Mechanism. Quarterly Journal of Economics.
-16. Statistics Denmark (Danmarks Statistik) - Vehicle registration data (2023-2024)
-
-### Technical Documentation:
-17. Ollama Documentation (2024). Tool Calling API Reference. https://github.com/ollama/ollama/blob/main/docs/api.md
-18. Fielding, R. (2000). Architectural Styles and the Design of Network-based Software Architectures. PhD Dissertation, UC Irvine.
+### Community & Forums:
+15. **Ollama Discord/GitHub Issues** - Real-world troubleshooting and optimization tips.
+16. **Stack Overflow** - SSE implementation patterns, Express streaming best practices.
+17. **Reddit r/LocalLLaMA** - Hardware optimization discussions and model comparisons.
 
 ---
 
@@ -494,11 +497,12 @@ You'll exceed 15 pages (36,000 chars) comfortably with this structure.
 
 ## WRITING RECOMMENDATIONS
 
-### Academic Tone:
-- Use third person ("The system implements..." not "We implemented...")
-- Cite sources for all claims
-- Define technical terms on first use
-- Balance technical depth with readability
+### Writing Style:
+- **First person OK** ("I implemented..." / "We discovered...")
+- **Cite sources** for major claims and external research
+- **Define technical terms** on first use with examples
+- **Balance theory and practice** - explain WHY, not just HOW
+- **Include lessons learned** - be honest about failures and iterations
 
 ### Structure Each Section:
 1. **Introduction paragraph** - what this section covers
