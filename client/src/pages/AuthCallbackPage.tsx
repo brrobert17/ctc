@@ -16,6 +16,7 @@ export default function AuthCallbackPage() {
       const lastName = urlParams.get('lastName')
       const provider = urlParams.get('provider')
       const profilePicture = urlParams.get('profilePicture')
+      const tier = urlParams.get('tier')
 
       if (token && userId && email && firstName && lastName) {
         // Login user with OAuth data
@@ -26,6 +27,7 @@ export default function AuthCallbackPage() {
           lastName,
           provider: provider || 'google',
           profilePicture: profilePicture ? decodeURIComponent(profilePicture) : undefined,
+          tier: (tier === 'LIFETIME' || tier === 'FREE') ? tier : undefined,
         })
         
         // Redirect to dashboard

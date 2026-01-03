@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import { LoginPrompt } from '../components/auth/LoginPrompt'
-import { saveEstimation } from '../utils/auth'
+import { fetchWithAuth, saveEstimation } from '../utils/auth'
 import { capitalizeManufacturer, formatDrivetrain, formatTransmission, capitalizeColor, formatFuelType, formatModel } from '../utils/estimateInputDisplayformatting'
 import modelInputDb from '../db/model_input_db.json'
 import manufacturerModelMap from '../db/manufacturer_model_map.json'
 import type { EstimationUserInput } from '../types/ml.types'
+import { useNavigate } from '@tanstack/react-router'
 
 const { manufacturerToModels, modelToManufacturer } = manufacturerModelMap as {
   manufacturerToModels: Record<string, string[]>;
@@ -20,6 +21,8 @@ interface EstimationResult {
 }
 
 function EstimationForm() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [currentEstimationSaved, setCurrentEstimationSaved] = useState(false)
   const [modelSearchTerm, setModelSearchTerm] = useState('')
   const [showModelDropdown, setShowModelDropdown] = useState(false)
@@ -98,11 +101,9 @@ function EstimationForm() {
 
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('http://localhost:3000/api/ml/estimate', {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+      const response = await fetchWithAuth(`${API_BASE_URL}/ml/estimate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(data),
       })
       
@@ -248,7 +249,6 @@ function EstimationForm() {
     }
   }
 
-
   const availableModels = formData.manufacturer && manufacturerToModels[formData.manufacturer]
     ? manufacturerToModels[formData.manufacturer]
     : modelInputDb.model.sort()
@@ -263,103 +263,115 @@ function EstimationForm() {
   )
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-slate-100 mb-2">Get AI Price Estimation</h1>
-          <p className="text-slate-400">Enter car details below to get an estimated market price.</p>
-        </div>
+  <div className="min-h-screen bg-slate-950 text-slate-100 p-4">
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Car Price Estimation</h1>
+        <p className="text-slate-400">Get an AI-powered estimate for your vehicle's market value</p>
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 bg-slate-900 p-6 rounded-xl border border-slate-800">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Market Selection Buttons */}
-              <div className="mb-6 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-                <div className="grid grid-cols-2">
-                  {/* Danish Market Button */}
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, danish_market: 1 }))}
-                    className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${
-                      formData.danish_market === 1 
-                        ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50' 
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
+      {user?.tier !== 'LIFETIME' && (
+        <div className="mb-6 p-4 bg-sky-500/10 border border-sky-500/20 rounded-lg">
+          <p className="text-slate-200 font-medium">Free plan includes 1 estimation total.</p>
+          <p className="text-slate-400 text-sm mt-1">
+            You can save your first estimation. Upgrade to Lifetime for unlimited estimations.
+          </p>
+          <button
+            onClick={() => navigate({ to: '/pricing' })}
+            className="mt-3 px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors"
+          >
+            View pricing
+          </button>
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="md:col-span-2 bg-slate-900 p-6 rounded-xl border border-slate-800">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Market Selection Buttons */}
+            <div className="mb-6 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+              <div className="grid grid-cols-2">
+                {/* Danish Market Button */}
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, danish_market: 1 }))}
+                  className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${
+                    formData.danish_market === 1 
+                      ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50' 
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
+                  }`}
+                >
+                  <img
+                    src="https://flagcdn.com/w20/dk.png"
+                    srcSet="https://flagcdn.com/w40/dk.png 2x"
+                    width="24"
+                    alt="Denmark"
+                    className="mr-3"
+                  />
+                  <span className="text-base">Danish Market</span>
+                </button>
+
+                {/* US Market Button */}
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, danish_market: 0 }))}
+                  className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${
+                    formData.danish_market === 0 
+                      ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50' 
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
+                  }`}
+                >
+                  <img
+                    src="https://flagcdn.com/w20/us.png"
+                    srcSet="https://flagcdn.com/w40/us.png 2x"
+                    width="24"
+                    alt="United States"
+                    className="mr-3"
+                  />
+                  <span className="text-base">US Market</span>
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Year Input */}
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Year</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="year"
+                    value={formData.year || ''}
+                    onChange={handleYearChange}
+                    placeholder="e.g. 2020"
+                    min="1980"
+                    max="2026"
+                    required
+                    className={`w-full bg-slate-950 border rounded px-3 py-2 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                      yearError 
+                        ? 'border-red-500 focus:ring-red-500' 
+                        : formData.year >= 1980 && formData.year <= 2026
+                        ? 'border-emerald-500 focus:ring-emerald-500'
+                        : 'border-slate-800 focus:ring-sky-500'
                     }`}
-                  >
-                    <img
-                      src="https://flagcdn.com/w20/dk.png"
-                      srcSet="https://flagcdn.com/w40/dk.png 2x"
-                      width="24"
-                      alt="Denmark"
-                      className="mr-3"
-                    />
-                    <span className="text-base">Danish Market</span>
-                  </button>
-                  
-                  {/* US Market Button */}
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, danish_market: 0 }))}
-                    className={`flex items-center justify-center px-6 py-4 transition-all duration-200 font-medium cursor-pointer ${
-                      formData.danish_market === 0 
-                        ? 'bg-sky-600 text-white shadow-xl ring-2 ring-sky-400 ring-opacity-50' 
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
-                    }`}
-                  >
-                    <img
-                      src="https://flagcdn.com/w20/us.png"
-                      srcSet="https://flagcdn.com/w40/us.png 2x"
-                      width="24"
-                      alt="United States"
-                      className="mr-3"
-                    />
-                    <span className="text-base">US Market</span>
-                  </button>
+                  />
+                  {/* Validation*/}
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {yearError ? (
+                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    ) : formData.year >= 1980 && formData.year <= 2026 ? (
+                      <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : null}
+                  </div>
                 </div>
+                {yearError && <p className="text-red-400 text-sm mt-1">{yearError}</p>}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Year Input */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Year</label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="year"
-                      value={formData.year || ''}
-                      onChange={handleYearChange}
-                      placeholder="e.g. 2020"
-                      min="1980"
-                      max="2026"
-                      required
-                      className={`w-full bg-slate-950 border rounded px-3 py-2 text-slate-100 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                        yearError 
-                          ? 'border-red-500 focus:ring-red-500' 
-                          : formData.year >= 1980 && formData.year <= 2026
-                          ? 'border-emerald-500 focus:ring-emerald-500'
-                          : 'border-slate-800 focus:ring-sky-500'
-                      }`}
-                    />
-                    {/* Validation*/}
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      {yearError ? (
-                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      ) : formData.year >= 1980 && formData.year <= 2026 ? (
-                        <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : null}
-                    </div>
-                  </div>
-                  {yearError && (
-                    <p className="text-red-400 text-sm mt-1">{yearError}</p>
-                  )}
-                </div>
-                
-                {/* Mileage Input */}
-                <div>
+              {/* Mileage Input */}
+              <div>
                   <label className="block text-sm font-medium text-slate-400 mb-1">
                     {formData.danish_market === 1 ? 'Mileage (km)' : 'Mileage (miles)'}
                   </label>
@@ -388,7 +400,10 @@ function EstimationForm() {
                     </div>
                   </div>
                 </div>
-                
+
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Manufacturer Input */}
                 <div className="relative">
                   <label className="block text-sm font-medium text-slate-400 mb-1">Manufacturer</label>
@@ -861,6 +876,14 @@ function EstimationForm() {
                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">
                  <p className="font-bold">Error</p>
                  <p>{mutation.error.message}</p>
+                 {mutation.error.message.includes('Free tier limit reached') && (
+                   <button
+                     onClick={() => navigate({ to: '/pricing' })}
+                     className="mt-3 px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors"
+                   >
+                     Upgrade to Lifetime
+                   </button>
+                 )}
                  <p className="text-xs mt-2 opacity-75">Ensure backend and ML service are running.</p>
                </div>
             )}

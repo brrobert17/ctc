@@ -48,6 +48,7 @@ export default function LoginPage() {
           lastName: data.data.lastName,
           provider: data.data.provider,
           profilePicture: data.data.profilePicture,
+          tier: data.data.tier,
         })
         
         navigate({ to: '/' })
