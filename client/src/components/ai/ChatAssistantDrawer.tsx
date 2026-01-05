@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github-dark.css'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface Message {
   role: 'user' | 'assistant' | 'system'
@@ -20,6 +21,7 @@ interface ThinkingState {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 export function ChatAssistantDrawer() {
+  const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -49,10 +51,26 @@ export function ChatAssistantDrawer() {
   const resizeStartWidth = useRef(0)
   const pendingMessageRef = useRef<string | null>(null)
 
+  const hasAccessRef = useRef(false)
+
   useEffect(() => {
-    const handleToggle = () => setIsOpen(prev => !prev)
+    hasAccessRef.current = user?.tier === 'LIFETIME'
+  }, [user?.tier])
+
+  useEffect(() => {
+    if (isOpen && user?.tier !== 'LIFETIME') {
+      setIsOpen(false)
+    }
+  }, [isOpen, user?.tier])
+
+  useEffect(() => {
+    const handleToggle = () => {
+      if (!hasAccessRef.current) return
+      setIsOpen(prev => !prev)
+    }
     
     const handleToggleWithMessage = (event: Event) => {
+      if (!hasAccessRef.current) return
       const customEvent = event as CustomEvent
       setIsOpen(true)
       

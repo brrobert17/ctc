@@ -31,6 +31,10 @@ export default function ProfilePage() {
     }
   }
 
+  const tier = user.tier || 'FREE'
+  const planLabel = tier === 'LIFETIME' ? 'Lifetime Plan' : 'Free Plan'
+  const planDescription = tier === 'LIFETIME' ? 'Full access unlocked' : 'Basic features included'
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-950 py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -102,12 +106,29 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold text-white mb-4">Subscription</h2>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-medium">Free Plan</p>
-              <p className="text-slate-400 text-sm">Basic features included</p>
+              <p className="text-white font-medium">{planLabel}</p>
+              <p className="text-slate-400 text-sm">{planDescription}</p>
             </div>
-            <button className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors">
-              Upgrade Plan
-            </button>
+            {tier === 'LIFETIME' ? (
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm">
+                  Active
+                </span>
+                <button
+                  onClick={() => navigate({ to: '/pricing' })}
+                  className="px-4 py-2 bg-slate-800 text-white rounded-md hover:bg-slate-700 transition-colors"
+                >
+                  View plans
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate({ to: '/pricing' })}
+                className="px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-500 transition-colors"
+              >
+                Upgrade Plan
+              </button>
+            )}
           </div>
         </div>
 

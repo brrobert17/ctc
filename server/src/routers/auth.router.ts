@@ -39,6 +39,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       data: { id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName },
     });
   } catch (error) {
+    console.error('[AUTH] Register error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -80,10 +81,12 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         firstName: user.firstName, 
         lastName: user.lastName,
         provider: user.provider,
-        profilePicture: user.profilePicture
+        profilePicture: user.profilePicture,
+        tier: user.tier
       },
     });
   } catch (error) {
+    console.error('[AUTH] Login error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -112,7 +115,7 @@ router.get('/google/callback',
       const token = generateToken(user.id);
 
       // Redirect to frontend with token
-      res.redirect(`http://localhost:5173/auth/callback?token=${token}&userId=${user.id}&email=${user.email}&firstName=${user.firstName}&lastName=${user.lastName}&provider=${user.provider}&profilePicture=${encodeURIComponent(user.profilePicture || '')}`);
+      res.redirect(`http://localhost:5173/auth/callback?token=${token}&userId=${user.id}&email=${user.email}&firstName=${user.firstName}&lastName=${user.lastName}&provider=${user.provider}&profilePicture=${encodeURIComponent(user.profilePicture || '')}&tier=${user.tier}`);
     } catch (error) {
       console.error('OAuth callback error:', error);
       res.redirect('http://localhost:5173/login?error=oauth_failed');

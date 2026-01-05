@@ -5,6 +5,7 @@ export interface User {
   lastName: string;
   provider: string;
   profilePicture?: string;
+  tier?: 'FREE' | 'LIFETIME';
 }
 
 export interface AuthTokens {

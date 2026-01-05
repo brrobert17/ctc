@@ -12,6 +12,8 @@ import AuthCallbackPage from './pages/AuthCallbackPage'
 import ProfilePage from './pages/ProfilePage'
 import SavedEstimationsPage from './pages/SavedEstimationsPage'
 import ComparisonPage from './pages/ComparisonPage'
+import PricingPage from './pages/PricingPage'
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage'
 
 // Create a root route with shared layout
 const rootRoute = createRootRoute({
@@ -81,6 +83,18 @@ const compareRoute = createRoute({
   component: ComparisonPage,
 })
 
+const pricingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/pricing',
+  component: PricingPage,
+})
+
+const checkoutSuccessRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/success',
+  component: CheckoutSuccessPage,
+})
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -93,6 +107,8 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
   savedEstimationsRoute,
   compareRoute,
+  pricingRoute,
+  checkoutSuccessRoute,
 ])
 
 // Create the router

@@ -9,6 +9,9 @@ export function Header() {
   const { user, isLoggedIn, logout } = useAuth()
   const { comparisonCars } = useComparison()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showAiPaywall, setShowAiPaywall] = useState(false)
+
+  const isLifetime = user?.tier === 'LIFETIME'
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
@@ -59,8 +62,14 @@ export function Header() {
           </Link>
 
           <button 
-            className="hidden md:flex items-center gap-2 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors"
-            onClick={() => window.dispatchEvent(new CustomEvent('toggle-ai-chat'))}
+            className="hidden md:flex items-center gap-2 text-sm font-medium text-sky-400 hover:text-sky-300 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={() => {
+              if (!isLifetime) {
+                setShowAiPaywall(true)
+                return
+              }
+              window.dispatchEvent(new CustomEvent('toggle-ai-chat'))
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m12 19 7-7 3 3-7 7-3-3z"/>
@@ -70,6 +79,36 @@ export function Header() {
             </svg>
             Ask the AI assistant
           </button>
+
+          {showAiPaywall && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/60"
+                onClick={() => setShowAiPaywall(false)}
+              />
+              <div className="relative w-full max-w-md mx-4 bg-slate-900 rounded-lg border border-slate-700 shadow-xl p-6">
+                <h3 className="text-lg font-semibold text-white">AI Assistant is a Lifetime feature</h3>
+                <p className="text-sm text-slate-300 mt-2">
+                  Upgrade to Lifetime to access the AI assistant.
+                </p>
+                <div className="mt-5 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => setShowAiPaywall(false)}
+                    className="px-4 py-2 text-sm font-medium text-slate-200 hover:text-white"
+                  >
+                    Close
+                  </button>
+                  <Link
+                    to="/pricing"
+                    onClick={() => setShowAiPaywall(false)}
+                    className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 transition-colors"
+                  >
+                    View pricing
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 border-l border-slate-800 pl-4">
             {isLoggedIn ? (
