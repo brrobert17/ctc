@@ -68,6 +68,37 @@ npm run dev
 1. .\venv\Scripts\Activate
 2. uvicorn app:app --host 0.0.0.0 --port 8000
 
+
+## AI Assistant (Danish Car Market Advisor)
+
+### Setup
+
+1. **Install Ollama** from https://ollama.com
+2. **Pull the Mistral model:**
+   
+   **For ALL hardware (automatically optimizes):**
+   ```bash
+   ollama pull mistral
+   ```
+   
+   Ollama will automatically use the best quantization for your GPU.
+
+3. **Configure for 4GB VRAM** in `server/src/services/llm.service.ts` (already set):
+   ```typescript
+   const MODEL_NAME = 'mistral';  // Uses automatic quantization
+   const USE_GPU = true;          // Set to false for CPU-only
+   ```
+   
+   Context is already reduced to 16K tokens for 4GB VRAM compatibility.
+
+4. **Optional - Get Ollama API Key** for enhanced web search from https://ollama.com/settings/keys
+5. **Add to `.env` file (optional):**
+   ```env
+   OLLAMA_API_KEY=your-ollama-api-key-here
+   ```
+
+
+
 ### Details on how client was initiated
 
 - Initiated react app with typescript using `npm create vite@latest . --template react-ts`
