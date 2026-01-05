@@ -204,9 +204,7 @@ const tools: Tool[] = [
   },
 ];
 
-/**
- * Gather context for the user's query by analyzing intent and pre-fetching relevant data
- */
+//Gather context for the user's query by analyzing intent and pre-fetching relevant data
 async function gatherContext(userMessage: string): Promise<ContextData> {
   console.log('[LLM CONTEXT] ===== STARTING CONTEXT GATHERING =====');
   console.log('[LLM CONTEXT] User message:', userMessage);

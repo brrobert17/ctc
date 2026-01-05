@@ -27,9 +27,7 @@ const DRIVETRAIN_MAP: { [key: string]: string[] } = {
   'all-wheel drive': ['Firehjulstræk'],
 };
 
-/**
- * Translate English search term to Danish database values
- */
+//Translate English search term to Danish database values
 function translateToDanish(term: string, map: { [key: string]: string[] }): string[] | null {
   const normalized = term.toLowerCase().trim();
   
@@ -68,16 +66,12 @@ export interface CarListing {
   car_location?: string | null;
 }
 
-/**
- * Get total count of cars in database
- */
+//Get total count of cars in database
 export const getCarCount = async (): Promise<number> => {
   return await prisma.car.count();
 };
 
-/**
- * Search cars in the database with various filters
- */
+//Search cars in the database with various filters
 export const searchCars = async (query: {
   manufacturer?: string;
   model?: string;
@@ -325,9 +319,7 @@ export const searchCars = async (query: {
   return results;
 };
 
-/**
- * Get market statistics from the database
- */
+//Get market statistics from the database
 export const getCarStats = async (): Promise<{
   totalListings: number;
   makes: string[];

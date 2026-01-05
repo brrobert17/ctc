@@ -2,7 +2,7 @@
 
 Car Trading Companion App
 
-# Front-end
+### Front-end
 
 - React
 - TypeScript
@@ -12,9 +12,49 @@ Car Trading Companion App
 
 ## How to run the app
 
-- `npm run dev`
+### Prerequisites
+- Node.js (LTS recommended)
+- npm
+- PostgreSQL database
+- Python 3.x (for ML service)
 
-### Run ML model
+### Install dependencies
+
+For running the application, dependencies must be installed in both the client and the server.
+
+```bash
+# Frontend
+cd client
+npm install
+
+# Backend
+cd ../server
+npm install
+```
+
+## Database
+
+A PostgreSQL database is required for the backend.
+
+You may use a local PostgreSQL instance or a hosted provider (e.g. Neon).
+
+Set the connection string in the DATABASE_URL variable.
+
+
+## Running the application
+Start backend
+```bash
+cd server
+npm run dev
+```
+
+Start frontend
+```bash
+cd client
+npm run dev
+```
+
+## Run ML model
 
 ### Setup python environment and run ML model
 
