@@ -1,5 +1,6 @@
 import { createRouter, RouterProvider, createRoute, createRootRoute } from '@tanstack/react-router'
 import { AuthProvider } from './contexts/AuthContext'
+import { ComparisonProvider } from './contexts/ComparisonContext'
 import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import BrowsePage from './pages/BrowsePage'
@@ -10,6 +11,7 @@ import SignupPage from './pages/SignupPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import ProfilePage from './pages/ProfilePage'
 import SavedEstimationsPage from './pages/SavedEstimationsPage'
+import ComparisonPage from './pages/ComparisonPage'
 import PricingPage from './pages/PricingPage'
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage'
 
@@ -75,6 +77,12 @@ const savedEstimationsRoute = createRoute({
   component: SavedEstimationsPage,
 })
 
+const compareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/compare',
+  component: ComparisonPage,
+})
+
 const pricingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/pricing',
@@ -98,6 +106,7 @@ const routeTree = rootRoute.addChildren([
   authCallbackRoute,
   profileRoute,
   savedEstimationsRoute,
+  compareRoute,
   pricingRoute,
   checkoutSuccessRoute,
 ])
@@ -115,7 +124,9 @@ declare module '@tanstack/react-router' {
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <ComparisonProvider>
+        <RouterProvider router={router} />
+      </ComparisonProvider>
     </AuthProvider>
   )
 }

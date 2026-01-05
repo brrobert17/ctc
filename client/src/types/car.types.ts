@@ -11,6 +11,8 @@ export interface Car {
   mileage: number | null;
   url: string | null;
   source: string | null;
+  estimatedPrice: number | null;
+  danishMarket: number |null;
 }
 
 export interface PaginationMeta {
@@ -84,6 +86,8 @@ export interface CarDetail {
   new_price: string | null;
   manufactured: string | null;
   color_description: string | null;
+  estimated_price: number | null;
+  danish_market: number | null;
   makes: { make: string | null } | null;
   models: { model: string | null } | null;
   fuel_types: { fuel_type: string | null } | null;

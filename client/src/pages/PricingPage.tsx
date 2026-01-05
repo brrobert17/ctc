@@ -69,7 +69,7 @@ export default function PricingPage() {
                 <p className="text-slate-400 text-sm mt-1">Basic browsing experience</p>
               </div>
               <div className="text-right">
-                <p className="text-white text-2xl font-bold">$0</p>
+                <p className="text-white text-2xl font-bold">0 DKK</p>
                 <p className="text-slate-400 text-xs">forever</p>
               </div>
             </div>
@@ -107,7 +107,7 @@ export default function PricingPage() {
                 <p className="text-slate-400 text-sm mt-1">One-time payment for lifelong membership</p>
               </div>
               <div className="text-right">
-                <p className="text-white text-3xl font-bold">$49.99</p>
+                <p className="text-white text-3xl font-bold">49.99 DKK</p>
                 <p className="text-slate-400 text-xs">one-time</p>
               </div>
             </div>

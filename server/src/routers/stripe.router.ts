@@ -44,7 +44,7 @@ router.post('/create-checkout-session', async (req: Request, res: Response): Pro
       mode: 'payment',
       line_items: safeItems.map((i) => ({
         price_data: {
-          currency: 'usd',
+          currency: 'dkk',
           product_data: { name: i.name },
           unit_amount: i.unit_amount,
         },

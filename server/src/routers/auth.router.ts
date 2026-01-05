@@ -39,6 +39,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       data: { id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName },
     });
   } catch (error) {
+    console.error('[AUTH] Register error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -85,6 +86,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
+    console.error('[AUTH] Login error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
