@@ -1,0 +1,125 @@
+{
+  "sources": [
+    {
+      "name": "bilbasen",
+      "db": "bilbasen/bilbasen_listings.db"
+    },
+    {
+      "name": "dba",
+      "db": "dba/dba_listings.db"
+    }
+  ],
+  "car": {
+    "table": "Car",
+    "natural_key": ["source", "source_listing_id"],
+    "columns": [
+      { "column": "source", "from": "source_name", "type": "text" },
+      { "column": "source_listing_id", "from": "sqlite:id", "type": "int" },
+      { "column": "name", "from": "sqlite:name", "type": "text" },
+      { "column": "price", "from": "sqlite:price", "type": "int_dkk" },
+      { "column": "first_registration", "from": "attr:First registration", "type": "text" },
+      { "column": "mileage", "from": "attr:Mileage", "type": "int" },
+      { "column": "model_year", "from": "attr:Model year", "type": "int" }
+    ]
+  },
+  "normalize": [
+    {
+      "table": "Make",
+      "value_column": "make",
+      "from": "attr:Make",
+      "car_fk": "make_id",
+      "unique": ["make"]
+    },
+    {
+      "table": "Model",
+      "value_column": "model",
+      "from": "attr:Model",
+      "car_fk": "model_id",
+      "unique": ["make_id", "model"],
+      "depends_on": {
+        "car_fk": "make_id",
+        "table": "Make",
+        "value_column": "make"
+      }
+    },
+    {
+      "table": "FuelType",
+      "value_column": "fuel_type",
+      "from": "attr:Fuel type",
+      "car_fk": "fuel_type_id",
+      "unique": ["fuel_type"]
+    },
+    {
+      "table": "BodyType",
+      "value_column": "body_type",
+      "from": "attr:Body type",
+      "car_fk": "body_type_id",
+      "unique": ["body_type"]
+    },
+    {
+      "table": "Color",
+      "value_column": "color",
+      "from": "attr:Color",
+      "car_fk": "color_id",
+      "unique": ["color"]
+    },
+    {
+      "table": "TransmissionType",
+      "value_column": "transmission_type",
+      "from": "attr:Transmission type",
+      "car_fk": "transmission_type_id",
+      "unique": ["transmission_type"]
+    },
+    {
+      "table": "DriveTrain",
+      "value_column": "drivetrain",
+      "from": "attr:Drivetrain",
+      "car_fk": "drivetrain_id",
+      "unique": ["drivetrain"]
+    },
+    {
+      "table": "ListingType",
+      "value_column": "listing_type",
+      "from": "attr:Ad type",
+      "car_fk": "listing_type_id",
+      "unique": ["listing_type"]
+    },
+    {
+      "table": "Category",
+      "value_column": "category",
+      "from": "attr:Category",
+      "car_fk": "category_id",
+      "unique": ["category"]
+    },
+    {
+      "table": "InteriorColor",
+      "value_column": "interior_color",
+      "from": "attr:Interior color",
+      "car_fk": "interior_color_id",
+      "unique": ["interior_color"]
+    },
+    {
+      "table": "CarLocation",
+      "value_column": "car_location",
+      "from": "attr:Car located in",
+      "car_fk": "car_location_id",
+      "unique": ["car_location"]
+    },
+    {
+      "table": "Source",
+      "value_column": "source",
+      "from": "source_name",
+      "car_fk": "source_id",
+      "unique": ["source"]
+    }
+  ],
+  "features": {
+    "from": "attr:Equipment",
+    "feature_table": "Feature",
+    "feature_value_column": "name",
+    "feature_unique": ["name"],
+    "link_table": "CarFeature",
+    "link_car_fk": "car_id",
+    "link_feature_fk": "feature_id"
+  }
+}
