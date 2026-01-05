@@ -3,6 +3,7 @@ import { FiltersSidebar } from '../components/browse/FiltersSidebar'
 import { ListingCard, type ListingCardProps } from '../components/browse/ListingCard'
 import { useCars } from '../hooks/useCars'
 import { getPriceBadge } from '../utils/pricing'
+import { useFilters } from '../context/FilterContext'
 import type { Car } from '../types/car.types'
 
 // Transform API car data to ListingCard props
@@ -31,9 +32,69 @@ export default function BrowsePage() {
   const [lastScrollY, setLastScrollY] = useState(0)
   const [page, setPage] = useState(1)
   const limit = 24 // Number of cars per page
+  
+  // Get filter state from context
+  const {
+    priceFilter,
+    setPriceFilter,
+    yearFilter,
+    setYearFilter,
+    mileageFilter,
+    setMileageFilter,
+    selectedBodyTypes,
+    setSelectedBodyTypes,
+    selectedFuelTypes,
+    setSelectedFuelTypes,
+    selectedTransmissions,
+    setSelectedTransmissions,
+    searchQuery,
+    setSearchQuery,
+    appliedPriceFilter,
+    appliedYearFilter,
+    appliedMileageFilter,
+    appliedBodyTypes,
+    appliedFuelTypes,
+    appliedTransmissions,
+    appliedSearch,
+    sortBy,
+    setSortBy,
+    applyFilters,
+    resetFilters,
+    hasAppliedFilters,
+  } = useFilters()
 
-  // Fetch cars using React Query
-  const { data, isLoading, isError, error } = useCars({ page, limit })
+  // Debounced search 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== appliedSearch) {
+        applyFilters()
+        setPage(1)
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Reset to page 1 when sort changes
+  useEffect(() => {
+    setPage(1)
+  }, [sortBy])
+
+  // Fetch cars using React Query with filters
+  const { data, isLoading, isError, error } = useCars({ 
+    page, 
+    limit,
+    ...(appliedPriceFilter.minPrice > 0 && { minPrice: appliedPriceFilter.minPrice }),
+    ...(appliedPriceFilter.maxPrice < 1000000 && { maxPrice: appliedPriceFilter.maxPrice }),
+    ...(appliedYearFilter.minYear > 1990 && { minYear: appliedYearFilter.minYear }),
+    ...(appliedYearFilter.maxYear < 2025 && { maxYear: appliedYearFilter.maxYear }),
+    ...(appliedMileageFilter.minMileage > 0 && { minMileage: appliedMileageFilter.minMileage }),
+    ...(appliedMileageFilter.maxMileage < 500000 && { maxMileage: appliedMileageFilter.maxMileage }),
+    ...(appliedBodyTypes.length > 0 && { bodyTypes: appliedBodyTypes }),
+    ...(appliedFuelTypes.length > 0 && { fuelTypes: appliedFuelTypes }),
+    ...(appliedTransmissions.length > 0 && { transmissions: appliedTransmissions }),
+    ...(appliedSearch.trim() && { search: appliedSearch.trim() }),
+    ...(sortBy && { sortBy })
+  })
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,32 +122,29 @@ export default function BrowsePage() {
       {/* Top Search Bar Area */}
       <div className={`bg-slate-900 border-b border-slate-800 sticky top-16 z-30 shadow-md transition-transform duration-300 ${isSearchBarVisible ? 'translate-y-0' : '-translate-y-[150%]'}`}>
         <div className="container mx-auto px-4 py-4">
-           <div className="flex flex-col md:flex-row gap-4">
-             <div className="relative flex-1">
-               <input 
-                 type="text" 
-                 placeholder="Search by make, model, or keywords..." 
-                 className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-md py-2.5 pl-10 pr-4 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-               />
-               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-                 <circle cx="11" cy="11" r="8"/>
-                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-               </svg>
-             </div>
-             <div className="w-full md:w-48 relative">
-               <input 
-                 type="text" 
-                 placeholder="Location (optional)" 
-                 className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-md py-2.5 pl-10 pr-4 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-               />
-               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                 <circle cx="12" cy="10" r="3"/>
-               </svg>
-             </div>
-             <button className="md:w-auto w-full bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-2.5 rounded-md transition-colors">
-               Search
-             </button>
+           <div className="relative">
+             <input 
+               type="text" 
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               placeholder="Search by make, model, or keywords..." 
+               className="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-md py-2.5 pl-10 pr-10 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+             />
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+               <circle cx="11" cy="11" r="8"/>
+               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+             </svg>
+             {searchQuery && (
+               <button 
+                 onClick={() => setSearchQuery('')}
+                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                   <line x1="18" y1="6" x2="6" y2="18"/>
+                   <line x1="6" y1="6" x2="18" y2="18"/>
+                 </svg>
+               </button>
+             )}
            </div>
         </div>
       </div>
@@ -113,12 +171,42 @@ export default function BrowsePage() {
             >
               <div className="p-6 overflow-y-auto scrollbar-minimal flex-1">
                 <h2 className="text-lg font-bold text-white mb-6">Filters</h2>
-                <FiltersSidebar />
+                <FiltersSidebar 
+                  priceFilter={priceFilter}
+                  onPriceChange={setPriceFilter}
+                  yearFilter={yearFilter}
+                  onYearChange={setYearFilter}
+                  mileageFilter={mileageFilter}
+                  onMileageChange={setMileageFilter}
+                  selectedBodyTypes={selectedBodyTypes}
+                  onBodyTypesChange={setSelectedBodyTypes}
+                  selectedFuelTypes={selectedFuelTypes}
+                  onFuelTypesChange={setSelectedFuelTypes}
+                  selectedTransmissions={selectedTransmissions}
+                  onTransmissionsChange={setSelectedTransmissions}
+                />
               </div>
-              <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
-                <button className="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-md transition-colors shadow-lg shadow-sky-900/20">
+              <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0 space-y-2">
+                <button 
+                  onClick={() => {
+                    applyFilters()
+                    setPage(1) // Reset to first page when filters change
+                  }}
+                  className="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-md transition-colors shadow-lg shadow-sky-900/20"
+                >
                   Apply Filters
                 </button>
+                {hasAppliedFilters && (
+                  <button 
+                    onClick={() => {
+                      resetFilters()
+                      setPage(1)
+                    }}
+                    className="w-full bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white font-medium py-2 rounded-md transition-colors border border-red-600/50"
+                  >
+                    Remove Filters
+                  </button>
+                )}
               </div>
             </div>
           </aside>
@@ -135,12 +223,18 @@ export default function BrowsePage() {
               
               <div className="flex items-center gap-3">
                 <span className="text-sm text-slate-400">Sort by:</span>
-                <select className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md py-2 px-3 focus:outline-none focus:border-sky-500">
-                  <option>Best value (AI)</option>
-                  <option>Lowest price</option>
-                  <option>Highest price</option>
-                  <option>Newest listings</option>
-                  <option>Lowest mileage</option>
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-md py-2 px-3 focus:outline-none focus:border-sky-500"
+                >
+                  <option value="">Estimated Cars (AI)</option>
+                  <option value="price_asc">Lowest price</option>
+                  <option value="price_desc">Highest price</option>
+                  <option value="mileage_asc">Lowest mileage</option>
+                  <option value="mileage_desc">Highest mileage</option>
+                  <option value="year_desc">Newest year</option>
+                  <option value="year_asc">Oldest year</option>
                 </select>
               </div>
             </div>

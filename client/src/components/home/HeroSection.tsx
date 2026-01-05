@@ -54,24 +54,6 @@ export function HeroSection() {
                 How it works
               </button>
             </div>
-            
-            {/* Quick Search Placeholder - logic will be in a separate component if complex, but simple here for layout */}
-            <div className="mt-12 pt-8 border-t border-slate-800">
-               <div className="flex flex-col sm:flex-row gap-3">
-                 <select className="bg-slate-900 border border-slate-700 text-slate-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent">
-                   <option>Select Make</option>
-                   <option>Volkswagen</option>
-                   <option>Ford</option>
-                   <option>BMW</option>
-                 </select>
-                 <select className="bg-slate-900 border border-slate-700 text-slate-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent">
-                   <option>Select Model</option>
-                 </select>
-                 <button className="bg-slate-800 text-sky-400 font-medium px-6 py-2 rounded-md hover:bg-slate-700 transition-colors whitespace-nowrap">
-                   Search
-                 </button>
-               </div>
-            </div>
           </div>
 
           {/* Right Hero Visual - Bento Grid 3 items */}

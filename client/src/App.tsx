@@ -1,6 +1,7 @@
 import { createRouter, RouterProvider, createRoute, createRootRoute } from '@tanstack/react-router'
 import { AuthProvider } from './contexts/AuthContext'
 import { ComparisonProvider } from './contexts/ComparisonContext'
+import { FilterProvider } from './context/FilterContext'
 import AppLayout from './components/layout/AppLayout'
 import HomePage from './pages/HomePage'
 import BrowsePage from './pages/BrowsePage'
@@ -125,7 +126,9 @@ function App() {
   return (
     <AuthProvider>
       <ComparisonProvider>
-        <RouterProvider router={router} />
+        <FilterProvider>
+          <RouterProvider router={router} />
+        </FilterProvider>
       </ComparisonProvider>
     </AuthProvider>
   )
