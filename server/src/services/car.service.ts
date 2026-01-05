@@ -1,12 +1,21 @@
 import prisma from '../database/prisma';
 
+export interface CarFilters {
+  minPrice?: number;
+  maxPrice?: number;
+  minYear?: number;
+  maxYear?: number;
+  minMileage?: number;
+  maxMileage?: number;
+  bodyTypes?: string[];
+  fuelTypes?: string[];
+  transmissions?: string[];
+  search?: string;
+  sortBy?: 'price_asc' | 'price_desc' | 'mileage_asc' | 'mileage_desc' | 'year_asc' | 'year_desc';
+}
+
 export class CarService {
-  /**
-   * Get all cars with pagination
-   * @param page - Page number (1-indexed)
-   * @param limit - Number of items per page
-   * @returns Object containing cars array, pagination metadata
-   */
+   //Get all cars with pagination
   static async getAll(page: number = 1, limit: number = 10) {
     // Ensure page and limit are positive integers
     const validPage = Math.max(1, Math.floor(page));
@@ -56,24 +65,126 @@ export class CarService {
     };
   }
 
-  /**
-   * Get core car information with pagination
-   * @param page - Page number (1-indexed)
-   * @param limit - Number of items per page
-   * @returns Object containing cars with core info only, pagination metadata
-   */
-  static async getCoreInfo(page: number = 1, limit: number = 10) {
+  //Get core car information with pagination
+  static async getCoreInfo(page: number = 1, limit: number = 10, filters?: CarFilters) {
     // Ensure page and limit are positive integers
     const validPage = Math.max(1, Math.floor(page));
     const validLimit = Math.max(1, Math.min(100, Math.floor(limit))); // Max 100 items per page
     
     const skip = (validPage - 1) * validLimit;
 
-    // Get total count for pagination metadata
-    const totalCount = await prisma.car.count();
+    // Build where clause for filters
+    const where: any = {};
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      where.price = {};
+      if (filters?.minPrice !== undefined) {
+        where.price.gte = filters.minPrice;
+      }
+      if (filters?.maxPrice !== undefined) {
+        where.price.lte = filters.maxPrice;
+      }
+    }
+    if (filters?.minYear !== undefined || filters?.maxYear !== undefined) {
+      where.model_year = {};
+      if (filters?.minYear !== undefined) {
+        where.model_year.gte = filters.minYear;
+      }
+      if (filters?.maxYear !== undefined) {
+        where.model_year.lte = filters.maxYear;
+      }
+    }
+    if (filters?.minMileage !== undefined || filters?.maxMileage !== undefined) {
+      where.mileage = {};
+      if (filters?.minMileage !== undefined) {
+        where.mileage.gte = filters.minMileage;
+      }
+      if (filters?.maxMileage !== undefined) {
+        where.mileage.lte = filters.maxMileage;
+      }
+    }
+    if (filters?.bodyTypes && filters.bodyTypes.length > 0) {
+      where.body_types = {
+        is: {
+          body_type: {
+            in: filters.bodyTypes,
+          },
+        },
+      };
+    }
+    if (filters?.fuelTypes && filters.fuelTypes.length > 0) {
+      // Map frontend filter values to actual DB values
+      const fuelTypeConditions: any[] = [];
+      
+      if (filters.fuelTypes.includes('Benzin')) {
+        fuelTypeConditions.push(
+          { fuel_types: { is: { fuel_type: 'Benzin' } } },
+          { fuel_types: { is: { fuel_type: 'Plug-in Benzin' } } }
+        );
+      }
+      if (filters.fuelTypes.includes('Diesel')) {
+        fuelTypeConditions.push(
+          { fuel_types: { is: { fuel_type: 'Diesel' } } }
+        );
+      }
+      if (filters.fuelTypes.includes('El')) {
+        fuelTypeConditions.push(
+          { fuel_types: { is: { fuel_type: 'El' } } }
+        );
+      }
+      if (filters.fuelTypes.includes('Hybrid')) {
+        fuelTypeConditions.push(
+          { fuel_types: { is: { fuel_type: { contains: 'ybrid' } } } }
+        );
+      }
+      
+      if (fuelTypeConditions.length > 0) {
+        if (fuelTypeConditions.length === 1) {
+          Object.assign(where, fuelTypeConditions[0]);
+        } else {
+          where.OR = fuelTypeConditions;
+        }
+      }
+    }
+    if (filters?.transmissions && filters.transmissions.length > 0) {
+      const transmissionValues: string[] = [];
+      if (filters.transmissions.includes('Automatisk')) {
+        transmissionValues.push('Automatisk');
+      }
+      if (filters.transmissions.includes('Manuel')) {
+        transmissionValues.push('Manuel', 'Manuelt');
+      }
+      if (transmissionValues.length > 0) {
+        where.transmission_types = {
+          is: {
+            transmission_type: {
+              in: transmissionValues,
+            },
+          },
+        };
+      }
+    }
+    if (filters?.search && filters.search.trim()) {
+      const searchTerms = filters.search.trim().split(/\s+/).filter(Boolean);
+      
+      const searchConditions = searchTerms.map(term => ({
+        OR: [
+          { makes: { is: { make: { contains: term, mode: 'insensitive' } } } },
+          { models: { is: { model: { contains: term, mode: 'insensitive' } } } },
+          { description: { contains: term, mode: 'insensitive' } },
+        ],
+      }));
+      
+      where.AND = [
+        ...(where.AND || []),
+        ...searchConditions,
+      ];
+    }
+
+    const totalCount = await prisma.car.count({ where });
 
     // Fetch cars with only core information
     const cars = await prisma.car.findMany({
+      where,
       skip,
       take: validLimit,
       select: {
@@ -121,14 +232,46 @@ export class CarService {
           take: 1, // Only get the first image
         },
       },
-      orderBy: [
-        { estimated_price: { sort: 'desc', nulls: 'last' } }, // Cars with estimated price first
-        { id: 'desc' }, // Then by most recent
-      ],
+      orderBy: (() => {
+        switch (filters?.sortBy) {
+          case 'price_asc':
+            return { price: { sort: 'asc' as const, nulls: 'last' as const } };
+          case 'price_desc':
+            return { price: { sort: 'desc' as const, nulls: 'last' as const } };
+          case 'mileage_asc':
+          case 'mileage_desc':
+            // Handle in application layer to treat 0 as null
+            return { id: 'desc' as const };
+          case 'year_asc':
+            return { model_year: { sort: 'asc' as const, nulls: 'last' as const } };
+          case 'year_desc':
+            return { model_year: { sort: 'desc' as const, nulls: 'last' as const } };
+          default:
+            // Estimated cars first (cars with estimated_price), then the rest
+            return [
+              { estimated_price: { sort: 'desc' as const, nulls: 'last' as const } },
+              { id: 'desc' as const },
+            ];
+        }
+      })(),
     });
 
-    // Transform the data to a clean structure
-    const formattedCars = cars.map((car) => ({
+    // Sorting for mileage
+    let sortedCars = cars;
+    
+    if (filters?.sortBy === 'mileage_asc' || filters?.sortBy === 'mileage_desc') {
+      const isAsc = filters.sortBy === 'mileage_asc';
+      sortedCars = cars.sort((a, b) => {
+        const aValid = a.mileage && a.mileage > 0;
+        const bValid = b.mileage && b.mileage > 0;
+        if (!aValid && !bValid) return 0;
+        if (!aValid) return 1;
+        if (!bValid) return -1;
+        return isAsc ? a.mileage! - b.mileage! : b.mileage! - a.mileage!;
+      });
+    }
+
+    const formattedCars = sortedCars.map((car) => ({
       id: car.id,
       make: car.makes?.make || null,
       model: car.models?.model || null,
@@ -160,11 +303,7 @@ export class CarService {
     };
   }
 
-  /**
-   * Get a single car by ID with all details
-   * @param id - Car ID
-   * @returns Car object with all related data or null if not found
-   */
+
   static async getById(id: number) {
     const car = await prisma.car.findUnique({
       where: { id },

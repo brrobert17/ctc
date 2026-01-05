@@ -34,6 +34,17 @@ export interface CarsResponse {
 export interface CarsQueryParams {
   page?: number;
   limit?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  minYear?: number;
+  maxYear?: number;
+  minMileage?: number;
+  maxMileage?: number;
+  bodyTypes?: string[];
+  fuelTypes?: string[];
+  transmissions?: string[];
+  search?: string;
+  sortBy?: 'price_asc' | 'price_desc' | 'mileage_asc' | 'mileage_desc' | 'year_asc' | 'year_desc';
 }
 
 export interface CarDetail {
