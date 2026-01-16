@@ -45,6 +45,7 @@ export function ListingCard({
           src={image} 
           alt={title} 
           className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105" 
+          style={{ objectPosition: '50% 80%' }}
         />
         {badge && (
           <div className={`absolute top-2 right-2 px-2 py-1 text-xs font-bold rounded shadow-sm ${badgeColors[badge]}`}>
