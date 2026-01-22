@@ -7,7 +7,7 @@ dotenv.config();
 
 // Initialize Ollama client with optional API key for web search
 const ollamaConfig: any = { 
-  host: 'http://localhost:11434'
+  host: 'http://10.87.178.89:11434/'
 };
 
 // Add API key if available for native web search
@@ -24,7 +24,7 @@ const ollama = new Ollama(ollamaConfig);
 
 // ==================== MODEL CONFIGURATION ====================
 // Optimized for RTX 3070 (4GB VRAM) with tool support
-const MODEL_NAME = 'mistral';
+const MODEL_NAME = 'gpt-oss';
 const USE_GPU = true;
 const NUM_CTX = 16384;
 const NUM_PREDICT = 2048;

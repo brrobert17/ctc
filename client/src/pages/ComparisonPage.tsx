@@ -1,9 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useComparison } from '../contexts/ComparisonContext'
 
 export default function ComparisonPage() {
   const { comparisonCars, removeFromComparison, clearComparison } = useComparison()
   const navigate = useNavigate()
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   if (comparisonCars.length === 0) {
     return (
@@ -148,11 +150,7 @@ export default function ComparisonPage() {
               Browse More
             </button>
             <button
-              onClick={() => {
-                if (confirm('Are you sure you want to clear all cars from comparison?')) {
-                  clearComparison()
-                }
-              }}
+              onClick={() => setShowClearConfirm(true)}
               className="px-4 py-2 bg-red-900/50 hover:bg-red-900 text-red-200 rounded-md transition-colors"
             >
               Clear All
@@ -254,6 +252,39 @@ export default function ComparisonPage() {
             </div>
           </div>
         </div>
+
+        {showClearConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowClearConfirm(false)}>
+            <div className="bg-slate-900 w-full max-w-md rounded-xl border border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-white">Clear comparison</h3>
+                <button onClick={() => setShowClearConfirm(false)} className="text-slate-400 hover:text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              </div>
+              <div className="p-6 text-slate-300">
+                Are you sure you want to clear all cars from comparison?
+              </div>
+              <div className="p-6 border-t border-slate-800 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-4 py-2 bg-slate-800 text-white rounded-md hover:bg-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    clearComparison()
+                    setShowClearConfirm(false)
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

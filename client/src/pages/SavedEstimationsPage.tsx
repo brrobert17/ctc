@@ -32,6 +32,8 @@ export default function SavedEstimationsPage() {
   const [estimations, setEstimations] = useState<SavedEstimation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [estimationIdToDelete, setEstimationIdToDelete] = useState<string | null>(null)
 
   // Fetch saved estimations
   useEffect(() => {
@@ -74,16 +76,13 @@ export default function SavedEstimationsPage() {
   }
 
   const handleDelete = async (estimationId: string) => {
-    if (!confirm('Are you sure you want to delete this estimation?')) {
-      return
-    }
-
     try {
+      setDeleteError(null)
       await deleteSavedEstimation(estimationId)
       setEstimations(prev => prev.filter(est => est.id !== estimationId))
     } catch (err) {
       console.error('Failed to delete estimation:', err)
-      alert('Failed to delete estimation. Please try again.')
+      setDeleteError('Failed to delete estimation. Please try again.')
     }
   }
 
@@ -158,6 +157,12 @@ export default function SavedEstimationsPage() {
         {error && (
           <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6">
             <p className="text-red-400">{error}</p>
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-6">
+            <p className="text-red-400">{deleteError}</p>
           </div>
         )}
 
@@ -269,7 +274,7 @@ export default function SavedEstimationsPage() {
                     Re-estimate
                   </button>
                   <button
-                    onClick={() => handleDelete(estimation.id)}
+                    onClick={() => setEstimationIdToDelete(estimation.id)}
                     className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,6 +285,41 @@ export default function SavedEstimationsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {estimationIdToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setEstimationIdToDelete(null)}>
+            <div className="bg-slate-900 w-full max-w-md rounded-xl border border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-white">Delete estimation</h3>
+                <button onClick={() => setEstimationIdToDelete(null)} className="text-slate-400 hover:text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              </div>
+              <div className="p-6 text-slate-300">
+                Are you sure you want to delete this estimation? This action cannot be undone.
+              </div>
+              <div className="p-6 border-t border-slate-800 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setEstimationIdToDelete(null)}
+                  className="px-4 py-2 bg-slate-800 text-white rounded-md hover:bg-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    const id = estimationIdToDelete
+                    setEstimationIdToDelete(null)
+                    if (!id) return
+                    await handleDelete(id)
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

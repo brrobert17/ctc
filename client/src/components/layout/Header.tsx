@@ -14,8 +14,9 @@ export function Header() {
   const isLifetime = user?.tier === 'LIFETIME'
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <>
+      <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur supports-[backdrop-filter]:bg-slate-950/60">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link to="/" className="text-xl font-bold tracking-tight text-slate-100 hover:text-sky-400 transition-colors flex items-center">
             <img src={favicon} alt="Favicon" className="w-6 h-6 mr-2" />
@@ -79,36 +80,6 @@ export function Header() {
             </svg>
             Ask the AI assistant
           </button>
-
-          {showAiPaywall && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center">
-              <div
-                className="absolute inset-0 bg-black/60"
-                onClick={() => setShowAiPaywall(false)}
-              />
-              <div className="relative w-full max-w-md mx-4 bg-slate-900 rounded-lg border border-slate-700 shadow-xl p-6">
-                <h3 className="text-lg font-semibold text-white">AI Assistant is a Lifetime feature</h3>
-                <p className="text-sm text-slate-300 mt-2">
-                  Upgrade to Lifetime to access the AI assistant.
-                </p>
-                <div className="mt-5 flex items-center justify-end gap-3">
-                  <button
-                    onClick={() => setShowAiPaywall(false)}
-                    className="px-4 py-2 text-sm font-medium text-slate-200 hover:text-white"
-                  >
-                    Close
-                  </button>
-                  <Link
-                    to="/pricing"
-                    onClick={() => setShowAiPaywall(false)}
-                    className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 transition-colors"
-                  >
-                    View pricing
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="flex items-center gap-4 border-l border-slate-800 pl-4">
             {isLoggedIn ? (
@@ -192,13 +163,44 @@ export function Header() {
         </div>
       </div>
       
-      {/* Overlay to close dropdown when clicking outside */}
+      </header>
+
+      {showAiPaywall && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setShowAiPaywall(false)}
+          />
+          <div className="relative w-full max-w-md mx-4 bg-slate-900 rounded-lg border border-slate-700 shadow-xl p-6">
+            <h3 className="text-lg font-semibold text-white">AI Assistant is a Lifetime feature</h3>
+            <p className="text-sm text-slate-300 mt-2">
+              Upgrade to Lifetime to access the AI assistant.
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowAiPaywall(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-200 hover:text-white"
+              >
+                Close
+              </button>
+              <Link
+                to="/pricing"
+                onClick={() => setShowAiPaywall(false)}
+                className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 transition-colors"
+              >
+                View pricing
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showUserMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => setShowUserMenu(false)}
         />
       )}
-    </header>
+    </>
   )
 }

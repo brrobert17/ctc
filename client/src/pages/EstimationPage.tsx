@@ -24,6 +24,7 @@ function EstimationForm() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [currentEstimationSaved, setCurrentEstimationSaved] = useState(false)
+  const [saveEstimationError, setSaveEstimationError] = useState<string | null>(null)
   const [modelSearchTerm, setModelSearchTerm] = useState('')
   const [showModelDropdown, setShowModelDropdown] = useState(false)
   const [manufacturerSearchTerm, setManufacturerSearchTerm] = useState('')
@@ -186,6 +187,7 @@ function EstimationForm() {
     }
 
     setCurrentEstimationSaved(false)
+    setSaveEstimationError(null)
     mutation.mutate(formData)
   }
 
@@ -194,8 +196,9 @@ function EstimationForm() {
       try {
         await saveEstimation(formData, mutation.data.data)
         setCurrentEstimationSaved(true)
+        setSaveEstimationError(null)
       } catch (error) {
-        alert('Failed to save estimation. Please try again.')
+        setSaveEstimationError('Failed to save estimation. Please try again.')
       }
     }
   }
@@ -851,6 +854,13 @@ function EstimationForm() {
                     </>
                   )}
                 </button>
+
+                {saveEstimationError && (
+                  <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm text-left">
+                    <p className="font-bold">Error</p>
+                    <p>{saveEstimationError}</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12 text-slate-500">
