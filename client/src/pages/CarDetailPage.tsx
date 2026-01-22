@@ -196,14 +196,21 @@ export default function CarDetailPage() {
                 </div>
               </div>
               
-              <a
-                href={car.url || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-3 rounded-md mb-3 transition-colors shadow-lg shadow-sky-900/20 text-center"
-              >
-                View listing on {car.sources?.source || 'Source'}
-              </a>
+              <div className="relative group mb-3">
+                <span
+                  className="block w-full bg-slate-800 text-slate-500 font-medium py-3 rounded-md transition-colors shadow-lg shadow-slate-950/20 text-center cursor-not-allowed select-none"
+                  aria-disabled="true"
+                  tabIndex={0}
+                >
+                  View listing on {car.sources?.source || 'Source'}
+                </span>
+                <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mt-[-10px] hidden group-hover:block group-focus-within:block z-20">
+                  <div className="max-w-[340px] bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-md shadow-xl px-3 py-2 text-center">
+                    Demo version: external listing links are disabled (GDPR/legal).
+                  </div>
+                  <div className="mx-auto w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-slate-900"></div>
+                </div>
+              </div>
               
               <p className="text-xs text-slate-500 text-center">
                 Opens in a new tab. We do not handle payments.

@@ -18,19 +18,13 @@ export interface ListingCardProps {
 }
 
 export function ListingCard({ 
-  id, title, price, fairPrice, image, mileage, year, location, transmission, fuel, badge, confidence, source, sourceUrl
+  id, title, price, image, mileage, year, location, transmission, fuel, badge, source
 }: ListingCardProps) {
   
   const badgeColors = {
     'Underpriced': 'bg-emerald-500 text-white',
     'Fairly priced': 'bg-sky-500 text-white',
     'Overpriced': 'bg-red-500 text-white'
-  }
-
-  const confidenceColors = {
-    'High': 'bg-emerald-500',
-    'Medium': 'bg-amber-500',
-    'Low': 'bg-red-500'
   }
 
   return (
@@ -86,14 +80,21 @@ export function ListingCard({
           >
             View details
           </Link>
-          <a 
-            href={sourceUrl || '#'} 
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-2 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-md text-sm font-medium transition-colors"
-          >
-            {source}
-          </a>
+          <div className="relative">
+            <span
+              className="peer px-3 py-2 border border-slate-700 bg-slate-900 text-slate-500 rounded-md text-sm font-medium cursor-not-allowed select-none inline-flex items-center"
+              aria-disabled="true"
+              tabIndex={0}
+            >
+              {source}
+            </span>
+            <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full mt-[-8px] hidden peer-hover:block peer-focus:block z-20">
+              <div className="max-w-[260px] bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-md shadow-xl px-3 py-2">
+                Demo version: external listing links are disabled (GDPR/legal).
+              </div>
+              <div className="mx-auto w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-slate-900"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

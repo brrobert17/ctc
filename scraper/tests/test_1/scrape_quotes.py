@@ -7,13 +7,12 @@ def scrape_quotes():
     try:
         # Fetch the HTML content
         response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        response.raise_for_status()  
         
         # Parse the HTML
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Find quote elements
-        # The user specified: <span class="text" itemprop="text">
         quote_elements = soup.find_all('span', class_='text', limit=5)
         
         print(f"--- Scraping Quotes from {url} ---")

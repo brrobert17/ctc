@@ -5,7 +5,6 @@ import os
 
 def scrape_quotes():
     url = 'https://quotes.toscrape.com/'
-    # Database file in the same directory as the script
     db_file = os.path.join(os.path.dirname(__file__), 'quotes.db')
     
     try:
@@ -22,7 +21,6 @@ def scrape_quotes():
             )
         ''')
         
-        # We limit to 50 as requested
         total_limit = 50
         quotes_collected = 0
         page_num = 1
@@ -33,11 +31,11 @@ def scrape_quotes():
             page_url = f'{url}page/{page_num}/'
             try:
                 response = requests.get(page_url)
-                if response.status_code == 404: # Stop if page not found
+                if response.status_code == 404: 
                      break
                 response.raise_for_status()
             except requests.RequestException:
-                 break # Stop on request error or if no more pages
+                 break
             
             # Parse the HTML
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -45,7 +43,7 @@ def scrape_quotes():
             # Find quote containers
             quote_divs = soup.find_all('div', class_='quote')
             
-            if not quote_divs: # Stop if no quotes on the page
+            if not quote_divs:
                  break
                  
             for div in quote_divs:
@@ -68,7 +66,6 @@ def scrape_quotes():
             
             page_num += 1
             
-        # Commit changes and close connection
         conn.commit()
         conn.close()
         print(f"\nData saved to SQLite database: {db_file}")

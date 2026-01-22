@@ -27,7 +27,7 @@ def scrape_products_deep_visible():
         
         with sync_playwright() as p:
             # Launch browser in HEADFUL mode (headless=False)
-            # We also add a slow_mo delay so you can see what's happening
+            # adding a slow mo delay I can see it 
             browser = p.chromium.launch(headless=False, slow_mo=1000)
             context = browser.new_context()
             page = context.new_page()
@@ -48,7 +48,6 @@ def scrape_products_deep_visible():
                 if href:
                     urls_to_scrape.append(href)
             
-            # Limit to 5 so we don't sit watching the browser forever
             urls_to_scrape = urls_to_scrape[:5]
             print(f"Will scrape {len(urls_to_scrape)} product pages.")
             
