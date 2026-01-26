@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Ollama client with optional API key for web search
+// change localhost to ZeroTier IP for demo
 const ollamaConfig: any = { 
   host: 'http://10.87.178.89:11434/'
 };
@@ -23,7 +23,6 @@ if (process.env.OLLAMA_API_KEY) {
 const ollama = new Ollama(ollamaConfig);
 
 // ==================== MODEL CONFIGURATION ====================
-// Optimized for RTX 3070 (4GB VRAM) with tool support
 const MODEL_NAME = 'gpt-oss';
 const USE_GPU = true;
 const NUM_CTX = 16384;
@@ -33,7 +32,7 @@ const NUM_GPU_LAYERS = USE_GPU ? 999 : 0;
 console.log(`[LLM] Using model: ${MODEL_NAME}, GPU: ${USE_GPU}, Context: ${NUM_CTX}`);
 // ============================================================
 
-const SYSTEM_PROMPT = `You are an expert used car trading advisor specializing in the Danish automotive market. Your role is to help users make informed decisions about buying and selling used vehicles in Denmark.
+const SYSTEM_PROMPT = `You are an expert used car trading advisor specializing in the Danish car market. Your role is to help users make informed decisions about buying and selling used vehicles in Denmark.
 
 Your expertise includes:
 - Vehicle reliability, common issues, and maintenance costs in Danish climate
@@ -51,7 +50,7 @@ Tone and Communication Style:
 - Patient and thorough in answering questions
 
 When providing advice:
-1. Always consider the user's budget in Danish Kroner (kr)
+1. Consider the user's budget in Danish Kroner (kr)
 2. Highlight both pros and cons of any vehicle
 3. Reference specific data from the Danish database when available
 4. Suggest alternatives or comparable options available in Denmark
@@ -63,8 +62,7 @@ You have access to a comprehensive PostgreSQL database with real Danish car list
 - Pricing information in Danish Kroner across different segments
 - Multiple fuel types (Benzin, Diesel, Hybrid, El/Electric, Plug-in Hybrid)
 - Various body types (Sedan, SUV, Hatchback, Stationcar, etc.)
-- Transmission types, drivetrains, colors, and Danish locations
-- Vehicle history data (owners, registration dates)
+- Transmission types, drivetrains, colors
 
 Available tools:
 - search_car_database: Search the Danish database with multiple filters
@@ -156,10 +154,6 @@ const tools: Tool[] = [
             type: 'string',
             description: 'Drivetrain type (e.g., FWD, RWD, AWD, 4WD)',
           },
-          location: {
-            type: 'string',
-            description: 'Car location or region',
-          },
           limit: {
             type: 'number',
             description: 'Maximum number of results to return (default: 10, max: 50)',
@@ -185,17 +179,13 @@ const tools: Tool[] = [
     function: {
       name: 'web_search',
       description:
-        'Search the web for current information, reviews, market trends, or any other online data. Use this for general web queries and real-time information.',
+        'Search the web for current information, reviews, or general data about cars. Use this when you need information not available in the database.',
       parameters: {
         type: 'object',
         properties: {
           query: {
             type: 'string',
-            description: 'The search query to look up on the web',
-          },
-          max_results: {
-            type: 'number',
-            description: 'Maximum number of results to return (default: 5, max: 10)',
+            description: 'The search query',
           },
         },
         required: ['query'],
@@ -206,39 +196,37 @@ const tools: Tool[] = [
 
 //Gather context for the user's query by analyzing intent and pre-fetching relevant data
 async function gatherContext(userMessage: string): Promise<ContextData> {
-  console.log('[LLM CONTEXT] ===== STARTING CONTEXT GATHERING =====');
+  console.log('[LLM CONTEXT] ===== ANALYZING USER INTENT =====');
   console.log('[LLM CONTEXT] User message:', userMessage);
   
   const context: ContextData = {};
   
   try {
-    console.log('[LLM CONTEXT] Preparing analysis prompt...');
-    // Use a lightweight LLM call to extract car-related entities from the query
-    const analysisPrompt = `Analyze this user query and extract car-related information. Return ONLY a JSON object with these fields:
+    // Use a lightweight LLM call to extract car-related entities and intent
+    const analysisPrompt = `Analyze this user query and extract information. Return ONLY a JSON object with these fields:
 - "carMake": the car manufacturer mentioned (e.g., "Volkswagen", "BMW", "Toyota") or null
 - "carModel": the specific model mentioned (e.g., "Golf GTI", "3 Series", "Corolla") or null
-- "needsWebSearch": true if the user is asking about a specific car model that would benefit from general information, false otherwise
-- "needsDatabaseSearch": true if the user wants to see available listings or pricing, false otherwise
+- "queryType": one of "search_listings", "get_info", "general_advice", or "other"
+- "priceRange": any budget/price mentioned (e.g., "under 100000", "affordable") or null
 
 User query: "${userMessage}"
 
 Return ONLY valid JSON, no other text.`;
 
-    console.log('[LLM CONTEXT] Calling Ollama for analysis...');
     const analysis = await ollama.chat({
       model: MODEL_NAME,
       messages: [{ role: 'user', content: analysisPrompt }],
       stream: false,
       options: {
-        temperature: 0.1, // Low temperature for consistent extraction
-        num_predict: 500,
-        num_ctx: NUM_CTX,
+        temperature: 0, // Zero temperature for deterministic JSON extraction
+        num_predict: 200, // Minimal - we only need ~100 chars of JSON
+        num_ctx: 1024, // Reduced context window for faster processing
         num_gpu: NUM_GPU_LAYERS,
       }
     });
 
     const fullContent = analysis.message.content.trim();
-    console.log('[LLM CONTEXT] Analysis response received (full):', fullContent);
+    console.log('[LLM CONTEXT] Analysis response:', fullContent.slice(0, 200));
 
     let extracted: any = {};
     try {
@@ -246,79 +234,47 @@ Return ONLY valid JSON, no other text.`;
       const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         extracted = JSON.parse(jsonMatch[0]);
-        console.log('[LLM CONTEXT] Successfully parsed JSON');
+        console.log('[LLM CONTEXT] Extracted intent:', JSON.stringify(extracted));
       } else {
-        console.log('[LLM CONTEXT] No JSON found in response');
-        // Fallback: try parsing the entire content as JSON
-        try {
-          extracted = JSON.parse(fullContent);
-          console.log('[LLM CONTEXT] Parsed entire response as JSON');
-        } catch {
-          console.log('[LLM CONTEXT] Could not parse as JSON at all');
-        }
+        // Fallback: try parsing the entire content
+        extracted = JSON.parse(fullContent);
       }
     } catch (e: any) {
-      console.log('[LLM CONTEXT] Failed to parse analysis:', e.message);
+      console.log('[LLM CONTEXT] JSON parse failed, proceeding without context:', e.message);
+      return context; // Return empty context
     }
 
-    console.log('[LLM CONTEXT] Extracted entities:', JSON.stringify(extracted, null, 2));
-
-    // Gather web context if a specific car model is mentioned
-    if (extracted.needsWebSearch && extracted.carMake && extracted.carModel) {
-      console.log('[LLM CONTEXT] Gathering web context for', extracted.carMake, extracted.carModel);
-      
-      const searchQuery = `${extracted.carMake} ${extracted.carModel} specifications features reliability`;
-      const webResults = await searchWeb(searchQuery);
-      
-      if (webResults.length > 0) {
-        let webSummary = `Background information about ${extracted.carMake} ${extracted.carModel}:\n\n`;
-        webResults.slice(0, 3).forEach((result, index) => {
-          webSummary += `${index + 1}. ${result.title}\n${result.snippet}\n\n`;
-        });
-        context.webContext = webSummary;
-        console.log('[LLM CONTEXT] Web context gathered:', webSummary.length, 'chars');
+    // Build a context message that guides the model on what to do
+    let guidance = '';
+    
+    if (extracted.carMake) {
+      guidance += `User is interested in: ${extracted.carMake}`;
+      if (extracted.carModel) {
+        guidance += ` ${extracted.carModel}`;
       }
+      guidance += '\n';
     }
-
-    // Gather database context if user wants to see listings
-    if (extracted.needsDatabaseSearch && extracted.carMake) {
-      console.log('[LLM CONTEXT] Gathering database context for', extracted.carMake, extracted.carModel || '(any model)');
-      
-      try {
-        const dbResults = await searchCars({
-          manufacturer: extracted.carMake,
-          model: extracted.carModel || undefined,
-          limit: 5,
-        });
-
-        console.log('[LLM CONTEXT] Database query returned', dbResults.length, 'results');
-        
-        if (dbResults.length > 0) {
-          let dbSummary = `Available listings in database for ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''}:\n\n`;
-          dbResults.forEach((car, index) => {
-            dbSummary += `${index + 1}. ${car.make} ${car.model} (${car.model_year}) - ${car.price} kr, ${car.mileage} km\n`;
-          });
-          dbSummary += `\nTotal ${dbResults.length} listings found.`;
-          context.databaseContext = dbSummary;
-          console.log('[LLM CONTEXT] Database context gathered:', dbResults.length, 'listings');
-        } else {
-          console.log('[LLM CONTEXT] No database results found for', extracted.carMake);
-          context.marketContext = `No ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''} listings found in the database. You may want to search the web for general information about this vehicle or suggest alternatives.`;
-        }
-      } catch (dbError: any) {
-        console.error('[LLM CONTEXT] Database search error:', dbError.message);
-        console.error('[LLM CONTEXT] Stack:', dbError.stack);
-        context.marketContext = `Database search failed. You should search the web for information about ${extracted.carMake}${extracted.carModel ? ' ' + extracted.carModel : ''} instead.`;
-      }
+    
+    if (extracted.priceRange) {
+      guidance += `Budget/Price constraint: ${extracted.priceRange}\n`;
+    }
+    
+    if (extracted.queryType === 'search_listings') {
+      guidance += 'User wants to see available car listings. Use search_car_database tool.\n';
+    } else if (extracted.queryType === 'get_info') {
+      guidance += 'User wants general information about a car model. Use web_search tool if needed.\n';
+    }
+    
+    if (guidance) {
+      context.marketContext = guidance.trim();
+      console.log('[LLM CONTEXT] Guidance:', guidance);
     }
 
   } catch (error: any) {
-    console.error('[LLM CONTEXT] ERROR gathering context:', error.message);
-    console.error('[LLM CONTEXT] Error stack:', error.stack);
+    console.error('[LLM CONTEXT] ERROR analyzing intent:', error.message);
   }
 
-  console.log('[LLM CONTEXT] ===== CONTEXT GATHERING COMPLETE =====');
-  console.log('[LLM CONTEXT] Final context:', JSON.stringify(context, null, 2));
+  console.log('[LLM CONTEXT] ===== INTENT ANALYSIS COMPLETE =====');
   return context;
 }
 
@@ -364,59 +320,43 @@ async function executeTool(toolCall: ToolCall): Promise<string> {
         return JSON.stringify(stats, null, 2);
 
       case 'web_search':
-        console.log('[LLM] executing web_search tool');
-        const query = toolCall.parameters.query || toolCall.parameters.q || '';
+        const searchQuery = toolCall.parameters.query || '';
         const maxResults = toolCall.parameters.max_results || 5;
         
-        if (!query) {
+        if (!searchQuery) {
           return 'Error: No search query provided';
         }
         
-        // Try native Ollama web search first if API key is available
-        if (process.env.OLLAMA_API_KEY) {
-          try {
-            console.log('[LLM] using native Ollama web_search for:', query);
-            // Check if webSearch method exists
-            if (typeof (ollama as any).webSearch === 'function') {
-              const nativeResults = await (ollama as any).webSearch({ 
-                query, 
-                max_results: Math.min(maxResults, 10) 
-              });
-              
-              if (nativeResults && nativeResults.results && nativeResults.results.length > 0) {
-                let summary = `Web search results for "${query}":\n\n`;
-                nativeResults.results.forEach((result: any, index: number) => {
-                  summary += `${index + 1}. ${result.title}\n`;
-                  summary += `   ${result.content}\n`;
-                  if (result.url) {
-                    summary += `   Source: ${result.url}\n`;
-                  }
-                  summary += '\n';
-                });
-                console.log('[LLM] native web search returned', nativeResults.results.length, 'results');
-                return summary;
-              }
-            } else {
-              console.log('[LLM] webSearch method not available in this Ollama version, using fallback');
-            }
-          } catch (nativeError: any) {
-            console.warn('[LLM] native web search failed, falling back to DuckDuckGo:', nativeError.message);
-          }
-        }
+        console.log('[LLM] executing native Ollama web_search for:', searchQuery);
         
-        // Fallback to DuckDuckGo
-        console.log('[LLM] using DuckDuckGo fallback for:', query);
-        const webResults = await searchWeb(query);
-        let summary = `Web search results for "${query}":\n\n`;
-        webResults.slice(0, maxResults).forEach((result, index) => {
-          summary += `${index + 1}. ${result.title}\n`;
-          summary += `   ${result.snippet}\n`;
-          if (result.url) {
-            summary += `   Source: ${result.url}\n`;
+        try {
+          // Use native Ollama webSearch method with API key
+          const searchResponse = await ollama.webSearch({
+            query: searchQuery,
+            maxResults: Math.min(maxResults, 10)
+          });
+          
+          if (!searchResponse.results || searchResponse.results.length === 0) {
+            return `No web search results found for "${searchQuery}". Try rephrasing the query or searching for more general terms.`;
           }
-          summary += '\n';
-        });
-        return summary;
+          
+          let summary = `Web search results for "${searchQuery}":\n\n`;
+          searchResponse.results.forEach((result: any, index: number) => {
+            summary += `${index + 1}. ${result.title}\n`;
+            summary += `   ${result.content}\n`;
+            if (result.url) {
+              summary += `   Source: ${result.url}\n`;
+            }
+            summary += '\n';
+          });
+          
+          console.log('[LLM] web_search returned', searchResponse.results.length, 'results');
+          return summary;
+          
+        } catch (webError: any) {
+          console.error('[LLM] native web_search error:', webError.message);
+          return `Web search error: ${webError.message}. The search functionality may require an Ollama API key to be configured.`;
+        }
 
       default:
         return `Unknown tool: ${toolCall.name}`;
@@ -435,13 +375,13 @@ export const testConnection = async (): Promise<{
   try {
     const response = await ollama.list();
     const models = response.models || [];
-    const hasGptOss = models.some((m: any) => m.name.includes('gpt-oss'));
+    const hasModel = models.some((m: any) => m.name.includes(MODEL_NAME));
 
-    if (!hasGptOss) {
+    if (!hasModel) {
       return {
         success: false,
         message:
-          'Connected to Ollama, but gpt-oss model not found. Available models: ' +
+          `Connected to Ollama, but ${MODEL_NAME} model not found. Available models: ` +
           models.map((m: any) => m.name).join(', '),
       };
     }
@@ -449,7 +389,7 @@ export const testConnection = async (): Promise<{
     return {
       success: true,
       message: 'Successfully connected to Ollama',
-      model: 'gpt-oss',
+      model: MODEL_NAME,
     };
   } catch (error: any) {
     return {
@@ -459,261 +399,8 @@ export const testConnection = async (): Promise<{
   }
 };
 
-export const chat = async (
-  userMessage: string,
-  conversationHistory: Array<{ role: string; content: string }> = []
-): Promise<string> => {
-  try {
-    console.log('[LLM] chat called', {
-      userMessage,
-      historyLength: conversationHistory.length,
-    });
-
-    const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...conversationHistory,
-      { role: 'user', content: userMessage },
-    ];
-
-    let response = await ollama.chat({
-      model: 'gpt-oss',
-      messages: messages,
-      tools: tools,
-      stream: false,
-      options: {
-        // GPU optimized - balanced for speed + quality + stability
-        num_predict: 2048,        // Sweet spot for tool calling reliability
-        num_ctx: 8192,            // Large context window for complex queries
-        temperature: 0.7,         // Balanced creativity
-        top_k: 40,                // Quality sampling
-        top_p: 0.9,               // Nucleus sampling
-        repeat_penalty: 1.1,      // Reduce repetition
-      }
-    });
-
-    // Full raw response for debugging
-    try {
-      console.log('[LLM] full raw response from Ollama:',
-        JSON.stringify(response, null, 2).slice(0, 2000)
-      );
-    } catch (e) {
-      console.log('[LLM] full raw response from Ollama (non-JSON)', response);
-    }
-
-    console.log('[LLM] raw response from Ollama', {
-      hasMessage: !!response?.message,
-      role: response?.message?.role,
-      contentPreview: response?.message?.content?.slice(0, 200),
-    });
-
-    let assistantMessage = response.message?.content || '';
-
-    console.log('[LLM] initial assistant message', assistantMessage.slice(0, 200));
-
-    // If the assistant message is empty, try to handle tool_calls from Ollama
-    // With GPU: Allow 3 iterations for complex multi-tool queries
-    let toolIterations = 0;
-    const maxToolIterations = 3;
-
-    if (!assistantMessage || !assistantMessage.trim()) {
-      console.warn('[LLM] assistant message is empty; checking tool_calls');
-
-      const toolCalls: any[] = (response as any).message?.tool_calls || [];
-
-      if (Array.isArray(toolCalls) && toolCalls.length > 0) {
-        console.log('[LLM] tool_calls from Ollama detected', toolCalls);
-
-        const toolMessages: any[] = [];
-
-        for (const call of toolCalls) {
-          const fn: any = (call as any).function || {};
-          const name: string = fn.name;
-          let args: any = fn.arguments ?? {};
-
-          if (typeof args === 'string') {
-            try {
-              args = JSON.parse(args);
-            } catch {
-              // keep as string
-            }
-          }
-
-          // Execute the tool using our unified executeTool function
-          console.log('[LLM] executing tool from tool_calls:', name, args);
-          const toolResult = await executeTool({ name, parameters: args });
-          
-          toolMessages.push({
-            role: 'tool',
-            tool_name: name,
-            content: toolResult,
-          });
-        }
-
-        if (toolMessages.length > 0) {
-          const messagesWithTools: any[] = [
-            ...messages,
-            { role: 'assistant', tool_calls: toolCalls },
-            ...toolMessages,
-          ];
-
-          toolIterations++;
-          console.log(`[LLM] calling Ollama chat with tool results (iteration ${toolIterations}/${maxToolIterations})`);
-          
-          // Allow up to 3 rounds of tool calls with GPU acceleration
-          const toolResponse = await ollama.chat({
-            model: 'gpt-oss',
-            messages: messagesWithTools,
-            tools: toolIterations < maxToolIterations ? tools : undefined, // Remove tools on last iteration
-            stream: false,
-            options: {
-              num_predict: 2048,        // Stable for tool responses
-              num_ctx: 8192,
-              temperature: 0.7,
-              top_k: 40,
-              top_p: 0.9,
-              repeat_penalty: 1.1,
-            }
-          });
-
-          try {
-            console.log(
-              '[LLM] full response after tools:',
-              JSON.stringify(toolResponse, null, 2).slice(0, 2000)
-            );
-          } catch {
-            console.log('[LLM] response after tools (non-JSON)', toolResponse);
-          }
-
-          assistantMessage = toolResponse.message?.content || '';
-          console.log('[LLM] assistant message after tools', assistantMessage.slice(0, 200));
-
-          if (!assistantMessage || !assistantMessage.trim()) {
-            console.warn(
-              '[LLM] assistant message still empty after tools; forcing final response'
-            );
-            
-            // Force model to provide a natural language answer
-            // IMPORTANT: Remove tools to prevent infinite loop
-            messagesWithTools.push({
-              role: 'user',
-              content: 'Based on the tool results above, please provide a clear, concise natural language answer to my original question. Do NOT call any more tools.'
-            });
-            
-            const finalResponse = await ollama.chat({
-              model: 'gpt-oss',
-              messages: messagesWithTools,
-              // NO TOOLS - force natural language only
-              stream: false,
-              options: {
-                num_predict: 2048,        // Longer for comprehensive final answer
-                num_ctx: 8192,
-                temperature: 0.7,
-                top_k: 40,
-                top_p: 0.9,
-              }
-            });
-            
-            assistantMessage = finalResponse.message?.content || '';
-            console.log('[LLM] final forced response', assistantMessage.slice(0, 200));
-            
-            if (!assistantMessage || !assistantMessage.trim()) {
-              return 'I apologize, but I was unable to generate a response. Please try rephrasing your question.';
-            }
-          }
-
-          // Update response for any further processing/logging
-          response = toolResponse;
-        } else {
-          console.warn(
-            '[LLM] tool_calls present but no executable tools'
-          );
-          return 'I apologize, but I encountered an issue executing the required tools. Please try again.';
-        }
-      } else {
-        console.warn(
-          '[LLM] assistant message is empty and no tool_calls provided'
-        );
-        return 'I apologize, but I was unable to generate a response. Please try again or rephrase your question.';
-      }
-    }
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    // Check if the model wants to use tools
-    while (attempts < maxAttempts) {
-      // Simple tool detection - look for function calls in the response
-      const toolCallMatch = assistantMessage.match(
-        /\[TOOL:(\w+)\]\s*(\{[^}]*\})?/
-      );
-
-      if (!toolCallMatch) {
-        break;
-      }
-
-      const toolName = toolCallMatch[1];
-      let toolParams = {};
-      try {
-        if (toolCallMatch[2]) {
-          toolParams = JSON.parse(toolCallMatch[2]);
-        }
-      } catch (e) {
-        // Invalid JSON, use empty params
-      }
-
-      console.log('[LLM] tool call detected', { toolName, toolParams });
-
-      // Execute the tool
-      const toolResult = await executeTool({ name: toolName, parameters: toolParams });
-
-      console.log(
-        '[LLM] tool result (truncated)',
-        typeof toolResult === 'string' ? toolResult.slice(0, 200) : toolResult
-      );
-
-      // Add tool result to conversation
-      messages.push({ role: 'assistant', content: assistantMessage });
-      messages.push({
-        role: 'user',
-        content: `Tool "${toolName}" returned:\n${toolResult}\n\nPlease provide your response based on this information.`,
-      });
-
-      // Get new response
-      console.log('[LLM] calling Ollama chat with updated messages:', messages);
-      response = await ollama.chat({
-        model: 'gpt-oss',
-        messages: messages,
-        tools: tools,
-        stream: false,
-        options: {
-          num_predict: -1,
-        }
-      });
-
-      console.log('[LLM] response after tool', {
-        hasMessage: !!response?.message,
-        role: response?.message?.role,
-        contentPreview: response?.message?.content?.slice(0, 200),
-      });
-
-      assistantMessage = response.message?.content || '';
-
-      console.log('[LLM] assistant message after tool', assistantMessage.slice(0, 200));
-      attempts++;
-    }
-
-    console.log('[LLM] final assistant message', assistantMessage.slice(0, 200));
-
-    return assistantMessage;
-  } catch (error: any) {
-    console.error('LLM Chat error:', error);
-    throw new Error(`Failed to get response from LLM: ${error.message}`);
-  }
-};
-
-/**
- * Streaming chat with async generator for Server-Sent Events
- * Yields chunks in real-time as they arrive from Ollama
- */
+// Streaming chat with async generator for Server-Sent Events
+// Yields chunks in real-time as they arrive from Ollama
 export async function* chatStream(
   userMessage: string,
   conversationHistory: Array<{ role: string; content: string }> = []
@@ -735,7 +422,6 @@ export async function* chatStream(
     const context = await gatherContext(userMessage);
     console.log('[LLM STREAM] gatherContext returned:', context);
     
-    // Build context-enriched message
     let enrichedMessage = userMessage;
     let contextMessage = '';
     
@@ -772,8 +458,7 @@ export async function* chatStream(
       ...conversationHistory,
     ];
     
-    // If we have database context, inject it as a system message AFTER the conversation
-    // This makes it impossible for the model to miss
+    // If we have database context, inject it as a system message
     if (contextMessage) {
       messages.push({ 
         role: 'system', 
@@ -785,7 +470,6 @@ export async function* chatStream(
 
     console.log('[LLM STREAM] starting Ollama stream...');
 
-    // Stream the initial response from Ollama
     const stream = await ollama.chat({
       model: MODEL_NAME,
       messages: messages,
@@ -795,7 +479,7 @@ export async function* chatStream(
         num_predict: NUM_PREDICT,
         num_ctx: NUM_CTX,
         num_gpu: NUM_GPU_LAYERS,
-        temperature: 0.3, // Lower temp for more focused, action-oriented behavior
+        temperature: 0.3,
         top_k: 40,
         top_p: 0.9,
         repeat_penalty: 1.1,
@@ -886,9 +570,7 @@ export async function* chatStream(
         if (typeof args === 'string') {
           try {
             args = JSON.parse(args);
-          } catch {
-            // keep as string
-          }
+          } catch {}
         }
 
         // Notify client which tool is executing
@@ -949,12 +631,11 @@ export async function* chatStream(
         model: MODEL_NAME,
         messages: messagesWithTools,
         stream: true,
-        // Don't send tools again in final response
         options: {
           num_predict: NUM_PREDICT,
           num_ctx: NUM_CTX,
           num_gpu: NUM_GPU_LAYERS,
-          temperature: 0.4, // Slightly higher than initial for natural synthesis
+          temperature: 0.4,
           top_k: 40,
           top_p: 0.9,
           repeat_penalty: 1.1,

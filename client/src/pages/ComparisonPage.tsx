@@ -175,6 +175,7 @@ export default function ComparisonPage() {
                             src={getMainImage(car)}
                             alt={getCarTitle(car)}
                             className="w-full h-full object-cover"
+                            style={{ objectPosition: '50% 80%' }}
                           />
                         </div>
                         <h3 className="text-sm font-semibold text-white">{getCarTitle(car)}</h3>

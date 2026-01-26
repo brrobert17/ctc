@@ -56,6 +56,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
           src={images[selectedIndex]}
           alt={`Car view ${selectedIndex + 1}`}
           className="w-full h-full object-cover transition-opacity duration-300"
+          style={{objectPosition: '50% 80%'}}
         />
         
         {/* Navigation Arrows (Inline) */}
