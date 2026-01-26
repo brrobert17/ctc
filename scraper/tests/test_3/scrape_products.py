@@ -4,7 +4,6 @@ from playwright.sync_api import sync_playwright
 
 def scrape_products():
     url = 'https://www.scrapingcourse.com/javascript-rendering'
-    # Database file in the same directory as the script
     db_file = os.path.join(os.path.dirname(__file__), 'products.db')
     
     try:
@@ -33,16 +32,13 @@ def scrape_products():
             page.goto(url)
             
             # Wait for the products to load (since it's JS rendered)
-            # We wait for the product-info selector to appear
             page.wait_for_selector('.product-info')
             
             # Find all product info elements
-            # Selector based on user request: div.product-info
             products = page.locator('.product-info').all()
             
             print(f"Found {len(products)} products total.")
             
-            # Limit to 10 as requested
             count = 0
             limit = 10
             
@@ -66,7 +62,6 @@ def scrape_products():
             
             browser.close()
             
-        # Commit changes and close connection
         conn.commit()
         conn.close()
         print(f"\nData saved to SQLite database: {db_file}")

@@ -68,14 +68,14 @@ def scrape_stealth():
             
             context = browser.new_context(
                 user_agent=selected_ua,
-                viewport={'width': 1280, 'height': 720} # Set a standard window size
+                viewport={'width': 1280, 'height': 720} 
             )
             
             page = context.new_page()
             
             print("Navigating to main page...")
             page.goto(url)
-            random_sleep(2, 4) # Wait for initial load
+            random_sleep(2, 4) 
             
             urls_to_scrape = []
             product_items = page.locator('.product-item').all()
@@ -88,7 +88,6 @@ def scrape_stealth():
                 if href:
                     urls_to_scrape.append(href)
             
-            # Limit to 3 to demonstrate the behavior without waiting too long
             urls_to_scrape = urls_to_scrape[:3]
             
             count = 0

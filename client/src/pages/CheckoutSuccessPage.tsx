@@ -13,7 +13,7 @@ export default function CheckoutSuccessPage() {
     const sessionId = search?.session_id
     if (!sessionId) return
 
-    const confirm = async () => {
+    const confirmCheckoutSession = async () => {
       try {
         setStatus('upgrading')
         setMessage(null)
@@ -43,7 +43,7 @@ export default function CheckoutSuccessPage() {
       }
     }
 
-    confirm()
+    confirmCheckoutSession()
   }, [search?.session_id])
 
   return (

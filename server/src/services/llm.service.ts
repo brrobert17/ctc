@@ -7,7 +7,7 @@ dotenv.config();
 
 // change localhost to ZeroTier IP for demo
 const ollamaConfig: any = { 
-  host: 'http://localhost:11434'
+  host: 'http://10.87.178.89:11434/'
 };
 
 // Add API key if available for native web search
