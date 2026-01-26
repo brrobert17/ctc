@@ -62,7 +62,7 @@ You have access to a comprehensive PostgreSQL database with real Danish car list
 - Pricing information in Danish Kroner across different segments
 - Multiple fuel types (Benzin, Diesel, Hybrid, El/Electric, Plug-in Hybrid)
 - Various body types (Sedan, SUV, Hatchback, Stationcar, etc.)
-- Transmission types, drivetrains, colors, and Danish locations
+- Transmission types, drivetrains, colors
 
 Available tools:
 - search_car_database: Search the Danish database with multiple filters
