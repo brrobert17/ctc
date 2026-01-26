@@ -106,7 +106,8 @@ export function HeroSection() {
                   >
                     {/* Image */}
                     <div className={`${car.featured ? 'aspect-[2.5/1]' : 'aspect-[16/9]'} rounded-lg bg-slate-700 mb-2 relative overflow-hidden`}>
-                       <img src={car.image} alt={car.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                       <img src={car.image} alt={car.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                       style={{ objectPosition: '50% 80%' }} />
                        {car.badge && (
                          <div className={`absolute top-2 right-2 ${car.badgeColor} text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-sm`}>
                            {car.badge}

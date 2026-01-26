@@ -3,6 +3,7 @@ import { PriceExplanationCard } from '../components/cardetail/PriceExplanationCa
 import { AIAdviceCard } from '../components/cardetail/AIAdviceCard'
 import { CarSpecsGrid } from '../components/cardetail/CarSpecsGrid'
 import { ImageGallery } from '../components/cardetail/ImageGallery'
+import { Breadcrumb } from '../components/common/Breadcrumb'
 import { useCar } from '../hooks/useCar'
 import { useComparison } from '../contexts/ComparisonContext'
 
@@ -48,9 +49,13 @@ export default function CarDetailPage() {
   return (
     <div className="bg-slate-950 min-h-screen pb-12">
       {/* Breadcrumb */}
-      <div className="container mx-auto px-4 py-4 text-sm text-slate-400">
-        <span>Home</span> <span className="mx-2">/</span> <span>Browse</span> <span className="mx-2">/</span> <span className="text-slate-200">{carTitle}</span>
-      </div>
+      <Breadcrumb 
+        items={[
+          { label: 'Home', path: '/' },
+          { label: 'Browse', path: '/browse' },
+          { label: carTitle },
+        ]}
+      />
 
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-3 gap-8">
